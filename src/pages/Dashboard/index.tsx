@@ -19,23 +19,15 @@ import {
     NETWORKS
 }                 from '@/data/mock';
 import {StatCard} from '@/components/shared/StatCard';
+import {
+    fmtAge,
+    isWithinDays,
+    machineAgeMs
+} from "@/utils/common";
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
-function machineAgeMs(created: string) {
-    return Date.now() - new Date(created).getTime();
-}
 
-function fmtAge(ms: number) {
-    const days = Math.floor(ms / 86400000);
-    if (days >= 365) return `${Math.floor(days / 365)}y ${Math.floor((days % 365) / 30)}m`;
-    if (days >= 30) return `${Math.floor(days / 30)}m ${days % 30}d`;
-    return `${days}d`;
-}
-
-function isWithinDays(dateStr: string, days: number) {
-    return Date.now() - new Date(dateStr).getTime() < days * 86400000;
-}
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -125,7 +117,6 @@ export default function Dashboard() {
     const topOwners      = useMemo(() =>
         Object.entries(ownerMap).sort((a, b) => b[1] - a[1]).slice(0, 6), [ownerMap]);
     const distinctOwners = Object.keys(ownerMap).length;
-    const noOwner        = MACHINES.filter(m => !m.owner || m.owner === '—').length;
 
     // ── Subgroups
     const subgroupMap  = useMemo(() => {
@@ -166,8 +157,8 @@ export default function Dashboard() {
 
                 {/* ── Fleet health ─────────────────────────────────────────────── */}
                 <Section title="Fleet Health">
-                    <Paper withBorder p="md" radius="sm"
-                           style={{background: 'var(--surface-2)'}}>
+                    <Paper p="md" radius="sm"
+                           style={{background: 'var(--surface-1)'}}>
                         <Group gap="xl" align="center" wrap="nowrap">
 
                             {/* Ring chart */}
@@ -221,8 +212,7 @@ export default function Dashboard() {
                                 <StatCard label="Suspended" value={suspended} color="var(--mantine-color-yellow-5)"/>
                                 <StatCard label="Distinct Owners" value={distinctOwners}
                                           color="var(--mantine-color-violet-5)"/>
-                                <StatCard label="No Owner" value={noOwner}
-                                          color={noOwner > 0 ? 'var(--mantine-color-orange-5)' : undefined}/>
+
                             </Flex>
 
                         </Group>
@@ -240,7 +230,7 @@ export default function Dashboard() {
                         <StatCard label="Avg RAM/VM" value={`${avgRAM}G`} color="var(--mantine-color-indigo-3)"/>
                     </Flex>
                     <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
-                        <Paper withBorder p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
+                        <Paper  p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                             <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                                   style={{letterSpacing: '0.1em'}}>Top VMs by RAM</Text>
                             <Stack gap="xs">
@@ -251,7 +241,7 @@ export default function Dashboard() {
                                 ))}
                             </Stack>
                         </Paper>
-                        <Paper withBorder p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
+                        <Paper  p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                             <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                                   style={{letterSpacing: '0.1em'}}>Top VMs by CPU</Text>
                             <Stack gap="xs">
@@ -293,7 +283,7 @@ export default function Dashboard() {
                 {/* ── Ownership & subgroups ─────────────────────────────────────── */}
                 <Section title="Ownership & Subgroups">
                     <SimpleGrid cols={{base: 1, md: 2}} spacing="md">
-                        <Paper withBorder p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
+                        <Paper  p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                             <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                                   style={{letterSpacing: '0.1em'}}>Top Owners</Text>
                             <Stack gap="xs">

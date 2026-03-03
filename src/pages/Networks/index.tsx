@@ -158,11 +158,11 @@ export default function NetworksPage() {
                             ? <Loader size="xs"/>
                             : (
                                 <Group gap="xs">
-                                    <StatCard label="Total" value={stats.total}/>
+                                    <StatCard label="Total" value={stats.total} minWidth={150}/>
                                     <StatCard label="Allocated" value={stats.allocated}
-                                              color="var(--mantine-color-blue-5)"/>
-                                    <StatCard label="Online" value={stats.on} color="var(--mantine-color-teal-5)"/>
-                                    <StatCard label="Offline" value={stats.off} color="var(--mantine-color-red-5)"/>
+                                              color="var(--mantine-color-blue-5)" minWidth={150}/>
+                                    <StatCard label="Online" value={stats.on} color="var(--mantine-color-teal-5)" minWidth={150}/>
+                                    <StatCard label="Offline" value={stats.off} color="var(--mantine-color-red-5)" minWidth={150}/>
                                 </Group>
                             )}
                     </Group>

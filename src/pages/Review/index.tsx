@@ -36,12 +36,19 @@ import {
 }                      from '@/data/mock';
 import {PowerBadge}    from '@/components/shared/PowerBadge';
 import {StatCard}      from '@/components/shared/StatCard';
-import {fmtDate}       from '@/pages/Networks/utils';
+import {
+    fmtDate,
+    fmtUptime
+}                      from '@/pages/Networks/utils';
 import {
     exportCsv,
     exportJson
 }                      from '@/utils/export';
 import type {Machine}  from '@/types';
+import {
+    fmtAge,
+    machineAgeMs
+}                      from "@/utils/common";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -51,25 +58,6 @@ const PRESETS = [
     {label: '1 year', value: '1y', ms: 1000 * 60 * 60 * 24 * 365},
     {label: '2 years', value: '2y', ms: 1000 * 60 * 60 * 24 * 730},
 ];
-
-function machineAgeMs(m: Machine) {
-    return Date.now() - new Date(m.created).getTime();
-}
-
-function fmtAge(ms: number) {
-    const days = Math.floor(ms / 86400000);
-    if (days >= 365) return `${Math.floor(days / 365)}y ${Math.floor((days % 365) / 30)}m`;
-    if (days >= 30) return `${Math.floor(days / 30)}m ${days % 30}d`;
-    return `${days}d`;
-}
-
-function fmtUptime(d: string | null) {
-    if (!d) return '—';
-    const diff = Date.now() - new Date(d).getTime();
-    const day  = Math.floor(diff / 86400000);
-    const h    = Math.floor((diff % 86400000) / 3600000);
-    return day > 365 ? `${Math.floor(day / 365)}y ${day % 365}d` : day > 0 ? `${day}d ${h}h` : `${h}h`;
-}
 
 // ─── Confirm modal ────────────────────────────────────────────────────────────
 
@@ -105,7 +93,6 @@ function ConfirmModal({opened, onClose, action, count, onConfirm}: {
     );
 }
 
-// ─── Export menu ──────────────────────────────────────────────────────────────
 
 function ExportMenu({machines, label, filename, disabled}: {
     machines: Machine[]; label: string; filename: string; disabled?: boolean;
@@ -129,9 +116,6 @@ function ExportMenu({machines, label, filename, disabled}: {
     );
 }
 
-// ─── Expanded detail row ──────────────────────────────────────────────────────
-
-// ─── Expanded detail row ──────────────────────────────────────────────────────
 
 function DetailField({label, children}: { label: string; children: React.ReactNode }) {
     return (
@@ -254,8 +238,8 @@ export default function ReviewPage() {
 
     const oldMachines = useMemo(() =>
             machines
-                .filter(m => machineAgeMs(m) >= thresholdMs)
-                .sort((a, b) => machineAgeMs(b) - machineAgeMs(a))
+                .filter(m => machineAgeMs(m.created) >= thresholdMs)
+                .sort((a, b) => machineAgeMs(b.created) - machineAgeMs(a.created))
         , [machines, thresholdMs]);
 
     const allSelected  = oldMachines.length > 0 && oldMachines.every(m => selected.has(m.ip));
@@ -375,13 +359,11 @@ export default function ReviewPage() {
                             </Table.Th>
                             <Table.Th w={28}/>
                             <Table.Th>Machine</Table.Th>
-                            <Table.Th>IP</Table.Th>
+                            <Table.Th>Folder</Table.Th>
                             <Table.Th>Power</Table.Th>
                             <Table.Th>Age</Table.Th>
                             <Table.Th>Created</Table.Th>
                             <Table.Th>Owner</Table.Th>
-                            <Table.Th>Group</Table.Th>
-                            <Table.Th>Network</Table.Th>
                             <Table.Th w={80}>Actions</Table.Th>
                         </Table.Tr>
                     </Table.Thead>
@@ -389,7 +371,7 @@ export default function ReviewPage() {
                         {oldMachines.map(m => {
                             const isSel    = selected.has(m.ip);
                             const isExp    = expanded.has(m.ip);
-                            const ageMs    = machineAgeMs(m);
+                            const ageMs    = machineAgeMs(m.created);
                             const ageColor = ageMs >= PRESETS[3].ms
                                 ? 'var(--mantine-color-red-5)'
                                 : ageMs >= PRESETS[2].ms
@@ -427,7 +409,7 @@ export default function ReviewPage() {
                                         </Table.Td>
 
                                         <Table.Td fw={500} ff="monospace">{m.name}</Table.Td>
-                                        <Table.Td ff="monospace" c="dimmed">{m.ip}</Table.Td>
+                                        <Table.Td ff="monospace" c="dimmed">{m.folder}</Table.Td>
                                         <Table.Td><PowerBadge state={m.power}/></Table.Td>
                                         <Table.Td>
                                             <Text size="xs" ff="monospace" fw={700} style={{color: ageColor}}>
@@ -436,16 +418,7 @@ export default function ReviewPage() {
                                         </Table.Td>
                                         <Table.Td ff="monospace" c="dimmed">{fmtDate(m.created)}</Table.Td>
                                         <Table.Td ff="monospace" c="dimmed">{m.owner}</Table.Td>
-                                        <Table.Td c="dimmed">{m.group}</Table.Td>
-                                        <Table.Td c="dimmed"
-                                                  style={{
-                                                      maxWidth    : 160,
-                                                      overflow    : 'hidden',
-                                                      textOverflow: 'ellipsis',
-                                                      whiteSpace  : 'nowrap'
-                                                  }}>
-                                            {m.network}
-                                        </Table.Td>
+
                                         <Table.Td>
                                             <Group gap={4}>
                                                 <Tooltip label="Archive" withArrow>
