@@ -1,0 +1,47 @@
+
+
+import type { Network, Machine } from '@/types';
+
+export const NETWORKS: Network[] = [
+  { id:'core-1', cidr:'10.0.0.0/24',    name:'Core — Production',   type:'core' },
+  { id:'core-2', cidr:'10.0.1.0/24',    name:'Core — Staging',      type:'core' },
+  { id:'core-3', cidr:'172.16.0.0/24',  name:'Core — Management',   type:'core' },
+  { id:'u-1',  cidr:'192.168.10.0/24',  name:'dev-team-alpha',      type:'user' },
+  { id:'u-2',  cidr:'192.168.20.0/24',  name:'ml-research-cluster', type:'user' },
+  { id:'u-3',  cidr:'192.168.30.0/24',  name:'qa-sandbox',          type:'user' },
+  { id:'u-4',  cidr:'192.168.40.0/24',  name:'data-engineering',    type:'user' },
+  { id:'u-5',  cidr:'192.168.50.0/24',  name:'security-ops',        type:'user' },
+  { id:'u-6',  cidr:'192.168.60.0/24',  name:'frontend-team',       type:'user' },
+  { id:'u-7',  cidr:'192.168.70.0/24',  name:'backend-services',    type:'user' },
+  { id:'u-8',  cidr:'192.168.80.0/24',  name:'infra-automation',    type:'user' },
+  { id:'u-9',  cidr:'192.168.90.0/24',  name:'analytics-platform',  type:'user' },
+  { id:'u-10', cidr:'192.168.100.0/24', name:'finance-systems',     type:'user' },
+  { id:'u-11', cidr:'192.168.110.0/24', name:'hr-tools',            type:'user' },
+  { id:'u-12', cidr:'192.168.120.0/24', name:'customer-portal',     type:'user' },
+  { id:'u-13', cidr:'192.168.130.0/24', name:'mobile-backend',      type:'user' },
+  { id:'u-14', cidr:'192.168.140.0/24', name:'cdn-edge-nodes',      type:'user' },
+  { id:'u-15', cidr:'192.168.150.0/24', name:'gpu-compute',         type:'user' },
+];
+
+export const MACHINES: Machine[] = [
+  { ip:'10.0.0.1',  name:'gw-prod-01',    power:'on',        folder:'Gateway',    group:'Network', subgroup:'Edge',    owner:'netops',   cpus:2,  ram:4,   created:'2023-01-10T08:00:00Z', uptime:'2024-11-01T12:00:00Z', network:'core-1',  description: 'Primary API server', vcenterUrl: 'https://vcenter.example.com/vm/app-prod-01' },
+  { ip:'10.0.0.5',  name:'app-prod-01',   power:'on',        folder:'App Tier',   group:'Backend', subgroup:'API',     owner:'platform', cpus:8,  ram:16,  created:'2023-03-01T10:00:00Z', uptime:'2025-01-15T10:00:00Z', network:'core-1',  description: 'Primary API server', vcenterUrl: 'https://vcenter.example.com/vm/app-prod-01' },
+  { ip:'10.0.0.6',  name:'app-prod-02',   power:'on',        folder:'App Tier',   group:'Backend', subgroup:'API',     owner:'platform', cpus:8,  ram:16,  created:'2023-03-02T10:00:00Z', uptime:'2025-01-16T10:00:00Z', network:'core-1' },
+  { ip:'10.0.0.10', name:'db-prod-01',    power:'on',        folder:'Database',   group:'Data',    subgroup:'Primary', owner:'dba',      cpus:16, ram:64,  created:'2023-01-20T09:00:00Z', uptime:'2024-12-01T09:00:00Z', network:'core-1' },
+  { ip:'10.0.0.11', name:'db-prod-02',    power:'on',        folder:'Database',   group:'Data',    subgroup:'Replica', owner:'dba',      cpus:16, ram:64,  created:'2023-01-21T09:00:00Z', uptime:'2024-12-02T09:00:00Z', network:'core-1' },
+  { ip:'10.0.0.20', name:'mon-prod-01',   power:'on',        folder:'Monitoring', group:'Ops',     subgroup:'Metrics', owner:'sre',      cpus:4,  ram:8,   created:'2023-02-05T10:00:00Z', uptime:'2025-02-10T11:00:00Z', network:'core-1' },
+  { ip:'10.0.0.30', name:'cache-01',      power:'off',       folder:'Cache',      group:'Backend', subgroup:'Redis',   owner:'platform', cpus:4,  ram:8,   created:'2023-05-10T10:00:00Z', uptime:null,                   network:'core-1' },
+  { ip:'10.0.1.1',  name:'gw-stage-01',  power:'on',        folder:'Gateway',    group:'Network', subgroup:'Edge',    owner:'netops',   cpus:2,  ram:4,   created:'2023-06-01T08:00:00Z', uptime:'2025-01-01T12:00:00Z', network:'core-2' },
+  { ip:'10.0.1.5',  name:'app-stage-01', power:'on',        folder:'App Tier',   group:'Backend', subgroup:'API',     owner:'platform', cpus:4,  ram:8,   created:'2023-06-15T10:00:00Z', uptime:'2025-01-10T10:00:00Z', network:'core-2' },
+  { ip:'10.0.1.10', name:'db-stage-01',  power:'suspended', folder:'Database',   group:'Data',    subgroup:'Primary', owner:'dba',      cpus:8,  ram:32,  created:'2023-06-20T09:00:00Z', uptime:null,                   network:'core-2' },
+  { ip:'172.16.0.1',name:'mgmt-gw-01',   power:'on',        folder:'Gateway',    group:'Network', subgroup:'Mgmt',    owner:'netops',   cpus:2,  ram:4,   created:'2022-11-01T08:00:00Z', uptime:'2024-10-01T08:00:00Z', network:'core-3' },
+  { ip:'172.16.0.5',name:'jump-01',       power:'on',        folder:'Security',   group:'Ops',     subgroup:'Access',  owner:'sre',      cpus:2,  ram:4,   created:'2022-11-05T08:00:00Z', uptime:'2024-10-05T08:00:00Z', network:'core-3' },
+  { ip:'192.168.10.3',  name:'dev-alice',   power:'on',      folder:'Workstation',group:'Dev',     subgroup:'FE',      owner:'alice',    cpus:4,  ram:8,   created:'2024-01-05T09:00:00Z', uptime:'2025-02-20T09:00:00Z', network:'u-1' },
+  { ip:'192.168.10.4',  name:'dev-bob',     power:'on',      folder:'Workstation',group:'Dev',     subgroup:'BE',      owner:'bob',      cpus:4,  ram:16,  created:'2024-01-06T09:00:00Z', uptime:'2025-02-21T09:00:00Z', network:'u-1' },
+  { ip:'192.168.10.50', name:'build-01',    power:'on',      folder:'CI',         group:'CI/CD',   subgroup:'Build',   owner:'devops',   cpus:8,  ram:16,  created:'2024-02-01T10:00:00Z', uptime:'2025-02-01T10:00:00Z', network:'u-1' },
+  { ip:'192.168.20.10', name:'gpu-01',      power:'on',      folder:'Compute',    group:'ML',      subgroup:'Train',   owner:'ml-team',  cpus:32, ram:128, created:'2024-03-01T08:00:00Z', uptime:'2025-02-15T08:00:00Z', network:'u-2' },
+  { ip:'192.168.20.11', name:'gpu-02',      power:'on',      folder:'Compute',    group:'ML',      subgroup:'Train',   owner:'ml-team',  cpus:32, ram:128, created:'2024-03-02T08:00:00Z', uptime:'2025-02-15T08:30:00Z', network:'u-2' },
+  { ip:'192.168.20.50', name:'jupyter-hub', power:'on',      folder:'Services',   group:'ML',      subgroup:'NB',      owner:'ml-team',  cpus:8,  ram:32,  created:'2024-04-01T10:00:00Z', uptime:'2025-02-18T10:00:00Z', network:'u-2' },
+  { ip:'192.168.30.10', name:'qa-runner-01',power:'off',     folder:'CI',         group:'QA',      subgroup:'Auto',    owner:'qa-lead',  cpus:4,  ram:8,   created:'2024-05-01T10:00:00Z', uptime:null,                   network:'u-3' },
+  { ip:'192.168.30.11', name:'qa-runner-02',power:'on',      folder:'CI',         group:'QA',      subgroup:'Auto',    owner:'qa-lead',  cpus:4,  ram:8,   created:'2024-05-02T10:00:00Z', uptime:'2025-02-22T08:00:00Z', network:'u-3' },
+];
