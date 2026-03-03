@@ -1,5 +1,5 @@
-import type { Network } from '@/types';
-import { NETWORKS } from '@/data/mock';
+import type {Network} from '@/types';
+import {NETWORKS}     from '@/data/mock';
 
 export async function fetchNetworks(): Promise<Network[]> {
     return NETWORKS;
@@ -21,13 +21,13 @@ export async function createNetwork(
     //   },
     //   body: JSON.stringify(payload),
     // });
-    return { ...payload, id: `u-${Date.now()}` };
+    return {...payload, id: `u-${Date.now()}`};
 }
 
 export async function updateNetwork(id: string, patch: Partial<Network>): Promise<Network> {
     // await fetch(`/api/networks/${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
     const existing = NETWORKS.find(n => n.id === id)!;
-    return { ...existing, ...patch };
+    return {...existing, ...patch};
 }
 
 export async function deleteNetwork(id: string): Promise<void> {

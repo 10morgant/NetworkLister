@@ -1,18 +1,44 @@
 // src/pages/Manage/index.tsx
-import { useState, useMemo } from 'react';
 import {
-    Box, Group, Stack, Text, TextInput, Textarea, SegmentedControl,
-    Select, Table, Badge, Button, ActionIcon, Modal, Switch,
-    Divider, Collapse, UnstyledButton, PasswordInput, Tooltip, Paper,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useDisclosure } from '@mantine/hooks';
+    useMemo,
+    useState
+}                            from 'react';
 import {
-    IconSearch, IconEdit, IconTrash, IconCheck, IconX,
-    IconPlus, IconLock, IconChevronDown,
-} from '@tabler/icons-react';
-import { NETWORKS as INITIAL } from '@/data/mock';
-import type { Network } from '@/types';
+    ActionIcon,
+    Badge,
+    Box,
+    Button,
+    Collapse,
+    Divider,
+    Group,
+    Modal,
+    Paper,
+    PasswordInput,
+    SegmentedControl,
+    Select,
+    Stack,
+    Switch,
+    Table,
+    Text,
+    Textarea,
+    TextInput,
+    Tooltip,
+    UnstyledButton,
+}                            from '@mantine/core';
+import {useForm}             from '@mantine/form';
+import {useDisclosure}       from '@mantine/hooks';
+import {
+    IconCheck,
+    IconChevronDown,
+    IconEdit,
+    IconLock,
+    IconPlus,
+    IconSearch,
+    IconTrash,
+    IconX,
+}                            from '@tabler/icons-react';
+import {NETWORKS as INITIAL} from '@/data/mock';
+import type {Network}        from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,8 +60,8 @@ interface NetworkFormValues {
 // ─── Create modal ─────────────────────────────────────────────────────────────
 
 function CreateNetworkModal({
-    opened, onClose, onSubmit, sessionCreds, onSaveCreds,
-}: {
+                                opened, onClose, onSubmit, sessionCreds, onSaveCreds,
+                            }: {
     opened: boolean;
     onClose: () => void;
     onSubmit: (values: NetworkFormValues) => void;
@@ -45,8 +71,8 @@ function CreateNetworkModal({
     const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const credForm = useForm<Credentials>({
-        initialValues: { username: '', password: '' },
-        validate: {
+        initialValues: {username: '', password: ''},
+        validate     : {
             username: v => v.trim() ? null : 'Required',
             password: v => v.trim() ? null : 'Required',
         },
@@ -54,10 +80,10 @@ function CreateNetworkModal({
 
     const netForm = useForm<NetworkFormValues>({
         initialValues: {
-            name: '', cidr: '', type: 'user',
+            name       : '', cidr: '', type: 'user',
             description: '', dhcp: true, notes: '',
         },
-        validate: {
+        validate     : {
             name: v => v.trim() ? null : 'Network name is required',
             cidr: v => /^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(v.trim())
                 ? null : 'Enter a valid CIDR (e.g. 192.168.10.0/24)',
@@ -97,9 +123,9 @@ function CreateNetworkModal({
                 {needsCreds && (
                     <>
                         <Paper withBorder p="sm" radius="sm"
-                            style={{ background: 'var(--mantine-color-dark-7)' }}>
+                               style={{background: 'var(--mantine-color-dark-7)'}}>
                             <Group gap="xs" mb="sm">
-                                <IconLock size={13} color="var(--mantine-color-dimmed)" />
+                                <IconLock size={13} color="var(--mantine-color-dimmed)"/>
                                 <Text size="xs" c="dimmed">
                                     Enter your credentials once — they'll be reused for this session.
                                 </Text>
@@ -117,14 +143,14 @@ function CreateNetworkModal({
                                 />
                             </Stack>
                         </Paper>
-                        <Divider />
+                        <Divider/>
                     </>
                 )}
 
                 {/* Already authenticated indicator */}
                 {!needsCreds && (
                     <Group gap="xs">
-                        <IconLock size={13} color="var(--mantine-color-teal-5)" />
+                        <IconLock size={13} color="var(--mantine-color-teal-5)"/>
                         <Text size="xs" c="teal.4">
                             Authenticated as <strong>{sessionCreds.username}</strong>
                         </Text>
@@ -144,7 +170,7 @@ function CreateNetworkModal({
                 />
                 <Select
                     label="Type" size="xs"
-                    data={[{ value: 'user', label: 'User' }, { value: 'core', label: 'Core' }]}
+                    data={[{value: 'user', label: 'User'}, {value: 'core', label: 'Core'}]}
                     {...netForm.getInputProps('type')}
                 />
 
@@ -152,23 +178,23 @@ function CreateNetworkModal({
                 <Box>
                     <UnstyledButton
                         onClick={() => setAdvancedOpen(v => !v)}
-                        style={{ width: '100%' }}
+                        style={{width: '100%'}}
                     >
                         <Group justify="space-between" py={4}>
                             <Text size="xs" c="dimmed" fw={600} tt="uppercase"
-                                style={{ letterSpacing: '0.08em' }}>
+                                  style={{letterSpacing: '0.08em'}}>
                                 Advanced options
                             </Text>
                             <IconChevronDown size={14}
-                                color="var(--mantine-color-dimmed)"
-                                style={{
-                                    transform: advancedOpen ? 'rotate(180deg)' : 'none',
-                                    transition: 'transform 0.2s',
-                                }}
+                                             color="var(--mantine-color-dimmed)"
+                                             style={{
+                                                 transform : advancedOpen ? 'rotate(180deg)' : 'none',
+                                                 transition: 'transform 0.2s',
+                                             }}
                             />
                         </Group>
                     </UnstyledButton>
-                    <Divider mb="xs" />
+                    <Divider mb="xs"/>
                     <Collapse in={advancedOpen}>
                         <Stack gap="sm" pt="xs">
                             <Switch
@@ -212,12 +238,12 @@ function CreateNetworkModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ManagePage() {
-    const [nets, setNets] = useState<Network[]>(INITIAL);
-    const [search, setSearch] = useState('');
-    const [typeF, setTypeF] = useState('all');
-    const [editing, setEditing] = useState<string | null>(null);
-    const [editVal, setEditVal] = useState('');
-    const [modalOpen, { open, close }] = useDisclosure(false);
+    const [nets, setNets]                 = useState<Network[]>(INITIAL);
+    const [search, setSearch]             = useState('');
+    const [typeF, setTypeF]               = useState('all');
+    const [editing, setEditing]           = useState<string | null>(null);
+    const [editVal, setEditVal]           = useState('');
+    const [modalOpen, {open, close}]      = useDisclosure(false);
     const [sessionCreds, setSessionCreds] = useState<Credentials | null>(null);
 
     const filtered = useMemo(() => {
@@ -225,16 +251,16 @@ export default function ManagePage() {
         if (typeF !== 'all') n = n.filter(x => x.type === typeF);
         if (search) {
             const q = search.toLowerCase();
-            n = n.filter(x => x.name.toLowerCase().includes(q) || x.cidr.includes(q));
+            n       = n.filter(x => x.name.toLowerCase().includes(q) || x.cidr.includes(q));
         }
         return n;
     }, [nets, search, typeF]);
 
     const save = () => {
-        setNets(p => p.map(n => n.id === editing ? { ...n, name: editVal } : n));
+        setNets(p => p.map(n => n.id === editing ? {...n, name: editVal} : n));
         setEditing(null);
     };
-    const del = (id: string) => setNets(p => p.filter(n => n.id !== id));
+    const del  = (id: string) => setNets(p => p.filter(n => n.id !== id));
 
     const handleCreate = (values: NetworkFormValues) => {
         // TODO: replace mock with real API call:
@@ -248,7 +274,7 @@ export default function ManagePage() {
         //   body: JSON.stringify(values),
         // });
         setNets(p => [...p, {
-            id: `u-${Date.now()}`,
+            id  : `u-${Date.now()}`,
             cidr: values.cidr,
             name: values.name,
             type: values.type,
@@ -256,10 +282,10 @@ export default function ManagePage() {
     };
 
     return (
-        <Stack gap={0} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <Stack gap={0} style={{flex: 1, minHeight: 0, overflow: 'hidden'}}>
 
             {/* Header */}
-            <Box p="md" style={{ borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0 }}>
+            <Box p="md" style={{borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0}}>
                 <Group justify="space-between">
                     <Stack gap={2}>
                         <Group gap="xs">
@@ -269,9 +295,9 @@ export default function ManagePage() {
                                     label="Credentials stored for this session — cleared on page reload."
                                     withArrow
                                 >
-                                    <Badge color="teal" variant="light" size="sm" style={{ cursor: 'default' }}>
+                                    <Badge color="teal" variant="light" size="sm" style={{cursor: 'default'}}>
                                         <Group gap={4}>
-                                            <IconLock size={10} />
+                                            <IconLock size={10}/>
                                             {sessionCreds.username}
                                         </Group>
                                     </Badge>
@@ -283,7 +309,7 @@ export default function ManagePage() {
                             {nets.filter(n => n.type === 'user').length} user
                         </Text>
                     </Stack>
-                    <Button size="xs" leftSection={<IconPlus size={14} />} onClick={open}>
+                    <Button size="xs" leftSection={<IconPlus size={14}/>} onClick={open}>
                         Add Network
                     </Button>
                 </Group>
@@ -291,19 +317,19 @@ export default function ManagePage() {
 
             {/* Toolbar */}
             <Group px="md" py="xs" gap="sm"
-                style={{ borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0 }}>
+                   style={{borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0}}>
                 <TextInput
-                    placeholder="Filter networks…" leftSection={<IconSearch size={14} />} size="xs"
+                    placeholder="Filter networks…" leftSection={<IconSearch size={14}/>} size="xs"
                     value={search} onChange={e => setSearch(e.currentTarget.value)}
-                    style={{ flex: '1 1 180px', maxWidth: 280 }}
+                    style={{flex: '1 1 180px', maxWidth: 280}}
                 />
                 <SegmentedControl size="xs" data={['all', 'core', 'user']}
-                    value={typeF} onChange={setTypeF} />
+                                  value={typeF} onChange={setTypeF}/>
                 <Text size="xs" c="dimmed" ml="auto" ff="monospace">{filtered.length} networks</Text>
             </Group>
 
             {/* Table */}
-            <Box style={{ flex: 1, overflowY: 'auto' }}>
+            <Box style={{flex: 1, overflowY: 'auto'}}>
                 <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                     <Table.Thead>
                         <Table.Tr>
@@ -317,21 +343,21 @@ export default function ManagePage() {
                     <Table.Tbody>
                         {filtered.map(net => {
                             const isEdit = editing === net.id;
-                            const cnt = 0;
+                            const cnt    = 0;
                             return (
                                 <Table.Tr key={net.id}>
                                     <Table.Td>
                                         {isEdit
                                             ? <TextInput size="xs" value={editVal}
-                                                onChange={e => setEditVal(e.currentTarget.value)}
-                                                onKeyDown={e => e.key === 'Enter' && save()}
-                                                autoFocus style={{ maxWidth: 240 }} />
+                                                         onChange={e => setEditVal(e.currentTarget.value)}
+                                                         onKeyDown={e => e.key === 'Enter' && save()}
+                                                         autoFocus style={{maxWidth: 240}}/>
                                             : <Text size="xs" fw={600}>{net.name}</Text>}
                                     </Table.Td>
                                     <Table.Td ff="monospace" c="dimmed">{net.cidr}</Table.Td>
                                     <Table.Td>
                                         <Badge color={net.type === 'core' ? 'blue' : 'cyan'}
-                                            variant="light" size="sm" tt="uppercase">{net.type}</Badge>
+                                               variant="light" size="sm" tt="uppercase">{net.type}</Badge>
                                     </Table.Td>
                                     <Table.Td c={cnt > 0 ? undefined : 'dark.4'} ff="monospace">
                                         {cnt > 0 ? `${cnt} guests` : 'empty'}
@@ -340,15 +366,20 @@ export default function ManagePage() {
                                         <Group gap={4}>
                                             {isEdit ? <>
                                                 <ActionIcon size="xs" color="blue" variant="light"
-                                                    onClick={save}><IconCheck size={12} /></ActionIcon>
+                                                            onClick={save}><IconCheck size={12}/></ActionIcon>
                                                 <ActionIcon size="xs" color="gray" variant="light"
-                                                    onClick={() => setEditing(null)}><IconX size={12} /></ActionIcon>
+                                                            onClick={() => setEditing(null)}><IconX
+                                                    size={12}/></ActionIcon>
                                             </> : <>
                                                 <ActionIcon size="xs" color="gray" variant="light"
-                                                    onClick={() => { setEditing(net.id); setEditVal(net.name); }}>
-                                                    <IconEdit size={12} /></ActionIcon>
+                                                            onClick={() => {
+                                                                setEditing(net.id);
+                                                                setEditVal(net.name);
+                                                            }}>
+                                                    <IconEdit size={12}/></ActionIcon>
                                                 <ActionIcon size="xs" color="red" variant="light"
-                                                    onClick={() => del(net.id)}><IconTrash size={12} /></ActionIcon>
+                                                            onClick={() => del(net.id)}><IconTrash
+                                                    size={12}/></ActionIcon>
                                             </>}
                                         </Group>
                                     </Table.Td>

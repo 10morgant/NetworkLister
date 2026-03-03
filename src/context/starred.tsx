@@ -1,5 +1,9 @@
 // src/context/starred.tsx
-import { createContext, useContext, useState } from 'react';
+import {
+    createContext,
+    useContext,
+    useState
+} from 'react';
 
 interface StarredContextValue {
     starred: Set<string>;
@@ -8,7 +12,7 @@ interface StarredContextValue {
 
 const StarredContext = createContext<StarredContextValue | null>(null);
 
-export function StarredProvider({ children }: { children: React.ReactNode }) {
+export function StarredProvider({children}: { children: React.ReactNode }) {
     const [starred, setStarred] = useState<Set<string>>(
         new Set(['core-1', 'u-1', 'u-2'])
     );
@@ -21,7 +25,7 @@ export function StarredProvider({ children }: { children: React.ReactNode }) {
         });
 
     return (
-        <StarredContext.Provider value={{ starred, toggleStar }}>
+        <StarredContext.Provider value={{starred, toggleStar}}>
             {children}
         </StarredContext.Provider>
     );

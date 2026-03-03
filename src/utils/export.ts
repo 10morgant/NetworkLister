@@ -1,8 +1,8 @@
 // src/utils/export.ts
-import type { Machine } from '@/types';
+import type {Machine} from '@/types';
 
 export function exportJson(machines: Machine[], filename = 'vms') {
-    const blob = new Blob([JSON.stringify(machines, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(machines, null, 2)], {type: 'application/json'});
     triggerDownload(blob, `${filename}.json`);
 }
 
@@ -23,14 +23,14 @@ export function exportCsv(machines: Machine[], filename = 'vms') {
         ...machines.map(m => headers.map(h => escape(m[h])).join(',')),
     ];
 
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([rows.join('\n')], {type: 'text/csv;charset=utf-8;'});
     triggerDownload(blob, `${filename}.csv`);
 }
 
 function triggerDownload(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);

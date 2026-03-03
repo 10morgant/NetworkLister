@@ -1,5 +1,5 @@
-import type { Machine } from '@/types';
-import { MACHINES } from '@/data/mock';
+import type {Machine} from '@/types';
+import {MACHINES}     from '@/data/mock';
 
 // Swap these functions for real fetch calls when ready.
 // e.g. return fetch('/api/machines').then(r => r.json())

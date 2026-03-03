@@ -1,4 +1,7 @@
-import { Box, Text } from '@mantine/core';
+import {
+    Box,
+    Text
+} from '@mantine/core';
 
 interface StatCardProps {
     label: string;
@@ -8,20 +11,20 @@ interface StatCardProps {
     minWidth?: number;
 }
 
-export function StatCard({ label, value, color, sub, minWidth = 100 }: StatCardProps) {
+export function StatCard({label, value, color, sub, minWidth = 100}: StatCardProps) {
     return (
         <Box
             px="sm" py="xs"
             style={{
-                borderRadius: 'var(--mantine-radius-sm)',
-                background: 'var(--surface-2)',
-                borderLeft: `3px solid ${color ?? 'var(--mantine-color-dark-4)'}`,
+                borderRadius  : 'var(--mantine-radius-sm)',
+                background    : 'var(--surface-2)',
+                borderLeft    : `3px solid ${color ?? 'var(--mantine-color-dark-4)'}`,
                 minWidth,
-                flex: '1 1 auto',
-                display: 'flex',
-                flexDirection: 'column',
+                flex          : '1 1 auto',
+                display       : 'flex',
+                flexDirection : 'column',
                 justifyContent: 'center',
-                minHeight: 58,
+                minHeight     : 58,
             }}
         >
             <Text
@@ -29,7 +32,7 @@ export function StatCard({ label, value, color, sub, minWidth = 100 }: StatCardP
                 fw={700}
                 ff="monospace"
                 lh={1}
-                style={{ color: color ?? 'var(--mantine-color-dark-0)' }}
+                style={{color: color ?? 'var(--mantine-color-dark-0)'}}
             >
                 {value}
             </Text>
@@ -39,14 +42,14 @@ export function StatCard({ label, value, color, sub, minWidth = 100 }: StatCardP
                 tt="uppercase"
                 style={{
                     letterSpacing: '0.06em',
-                    color: 'var(--mantine-color-dark-2)',
-                    marginTop: 3,
+                    color        : 'var(--mantine-color-dark-2)',
+                    marginTop    : 3,
                 }}
             >
                 {label}
             </Text>
             {sub && (
-                <Text size="xs" style={{ color: 'var(--mantine-color-dark-3)', marginTop: 1 }}>
+                <Text size="xs" style={{color: 'var(--mantine-color-dark-3)', marginTop: 1}}>
                     {sub}
                 </Text>
             )}
