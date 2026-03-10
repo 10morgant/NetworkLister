@@ -2,7 +2,6 @@ import {
     Network,
     NetworksResponse
 } from '@/types';
-import {NETWORKS} from '@/data/mock';
 
 export async function fetchNetworks(): Promise<NetworksResponse> {
     const res = await fetch(`http://localhost:8000/networks`);

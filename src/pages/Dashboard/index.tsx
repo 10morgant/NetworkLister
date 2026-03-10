@@ -14,10 +14,6 @@ import {
     Stack,
     Text,
 }                 from '@mantine/core';
-import {
-    MACHINES,
-    NETWORKS
-}                 from '@/data/mock';
 import {StatCard} from '@/components/shared/StatCard';
 import {
     fmtAge,

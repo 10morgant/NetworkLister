@@ -37,8 +37,9 @@ import {
     IconTrash,
     IconX,
 }                            from '@tabler/icons-react';
-import {NETWORKS as INITIAL} from '@/data/mock';
 import type {Network}        from '@/types';
+
+const INITIAL = []
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

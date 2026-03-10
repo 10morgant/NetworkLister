@@ -30,10 +30,6 @@ import {
     IconJson,
     IconTrash,
 }                      from '@tabler/icons-react';
-import {
-    MACHINES as INITIAL_MACHINES,
-    NETWORKS
-}                      from '@/data/mock';
 import {PowerBadge}    from '@/components/shared/PowerBadge';
 import {StatCard}      from '@/components/shared/StatCard';
 import {
