@@ -46,7 +46,7 @@ export default function NetworksPage() {
             const firstCore = networks.networks.filter((net) => net.core)[0]
             console.log(firstCore)
             if (firstCore) {
-                navigate({to: '/networks/{-$networkId}', params: {networkId: firstCore.id}, replace: true});
+                navigate({to: '/networks/{-$networkId}', params: {networkId: firstCore.name}, replace: true});
             }
         }
     }, [networkId, networks, navigate]);
@@ -77,6 +77,7 @@ export default function NetworksPage() {
                 networksResponse={networks ?? {networks: []}}
                 selected={networkId}
                 onSelect={handleSelect}
+                isLoading={networksLoading}
             />
             <NetworkView networkId={networkId}/>
 

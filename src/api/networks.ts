@@ -10,10 +10,6 @@ export async function fetchNetworks(): Promise<NetworksResponse> {
     return res.json();
 }
 
-export async function fetchNetwork(id: string): Promise<Network | undefined> {
-    return NETWORKS.find(n => n.id === id);
-}
-
 export async function createNetwork(
     payload: Omit<Network, 'id'>,
     _credentials: { username: string; password: string },

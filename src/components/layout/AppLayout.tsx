@@ -3,7 +3,6 @@ import {useState} from 'react';
 import {
     Link,
     Outlet,
-    useNavigate,
     useRouterState
 }                 from '@tanstack/react-router';
 import {
@@ -26,11 +25,10 @@ import {
     IconSettings,
 }                 from '@tabler/icons-react';
 
-type Page = 'dashboard' | 'networks' | 'folders' | 'review' | 'manage';
 
 const NAV_ITEMS = [
     {id: 'dashboard', label: 'Dashboard', icon: <IconLayoutDashboard size={18}/>, path: '/', base: '/'},
-    {id: 'networks', label: 'Networks', icon: <IconServer size={18}/>, path: '/networks/core-1', base: '/networks'},
+    {id: 'networks', label: 'Networks', icon: <IconServer size={18}/>, path: '/networks/', base: '/networks'},
     {id: 'folders', label: 'Guests by Folder', icon: <IconFolder size={18}/>, path: '/folders', base: '/folders'},
     {id: 'review', label: 'Review VMs', icon: <IconClock size={18}/>, path: '/review', base: '/review'},
     {id: 'manage', label: 'Manage Networks', icon: <IconSettings size={18}/>, path: '/manage', base: '/manage'},
@@ -89,7 +87,6 @@ function NavItem({item, active, collapsed}: {
 
 export function AppLayout() {
     const [collapsed, setCollapsed] = useState(false);
-    const navigate                  = useNavigate();
     const routerState               = useRouterState();
     const currentPath               = routerState.location.pathname;
 
@@ -112,7 +109,12 @@ export function AppLayout() {
                 main  : {background: 'var(--surface-0)'},
             }}
         >
-            <AppShell.Navbar p={0} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--surface-0)'}}>
+            <AppShell.Navbar p={0} style={{
+                overflow     : 'hidden',
+                display      : 'flex',
+                flexDirection: 'column',
+                background   : 'var(--surface-0)'
+            }}>
 
                 {/* Logo */}
                 <Box

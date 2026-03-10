@@ -5,13 +5,12 @@ import {
 import {
     Anchor,
     Box,
-    Center,
     Collapse,
     Group,
-    Loader,
     ScrollArea,
     SegmentedControl,
     SimpleGrid,
+    Skeleton,
     Stack,
     Switch,
     Table,
@@ -287,7 +286,47 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
     const totalVisible = filteredRows.length + filteredClashes.length;
 
     if (isLoading) {
-        return <Center style={{flex: 1}}><Loader size="sm"/></Center>;
+        return (
+            <Stack gap={0} style={{flex: 1, minHeight: 0, height: '100%', overflow: 'hidden'}}>
+                {/* Skeleton toolbar */}
+                <Group px="md" py="xs" gap="sm"
+                       style={{borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0}} wrap="wrap">
+                    <Skeleton height={28} width={220} radius="sm"/>
+                    <Skeleton height={28} width={200} radius="sm"/>
+                </Group>
+                {/* Skeleton table */}
+                <Box style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
+                    <Table fz="xs" verticalSpacing="xs">
+                        <Table.Thead>
+                            <Table.Tr>
+                                <Table.Th w={24}/>
+                                <Table.Th>IP Address</Table.Th>
+                                <Table.Th>Machine Name</Table.Th>
+                                <Table.Th>Power</Table.Th>
+                                <Table.Th>CPUs</Table.Th>
+                                <Table.Th>RAM</Table.Th>
+                                <Table.Th>Group</Table.Th>
+                                <Table.Th>Owner</Table.Th>
+                            </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                            {Array.from({length: 12}).map((_, i) => (
+                                <Table.Tr key={i}>
+                                    <Table.Td/>
+                                    <Table.Td><Skeleton height={10} width={90} radius="sm"/></Table.Td>
+                                    <Table.Td><Skeleton height={10} width={`${50 + (i % 5) * 10}%`} radius="sm"/></Table.Td>
+                                    <Table.Td><Skeleton height={16} width={52} radius="xl"/></Table.Td>
+                                    <Table.Td><Skeleton height={10} width={20} radius="sm"/></Table.Td>
+                                    <Table.Td><Skeleton height={10} width={28} radius="sm"/></Table.Td>
+                                    <Table.Td><Skeleton height={10} width={`${40 + (i % 4) * 12}%`} radius="sm"/></Table.Td>
+                                    <Table.Td><Skeleton height={10} width={60} radius="sm"/></Table.Td>
+                                </Table.Tr>
+                            ))}
+                        </Table.Tbody>
+                    </Table>
+                </Box>
+            </Stack>
+        );
     }
 
     return (

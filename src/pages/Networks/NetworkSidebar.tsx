@@ -8,6 +8,7 @@ import {
     Group,
     ScrollArea,
     SegmentedControl,
+    Skeleton,
     Stack,
     Text,
     TextInput,
@@ -29,6 +30,7 @@ interface Props {
     networksResponse: NetworksResponse;
     selected: string;
     onSelect: (id: string) => void;
+    isLoading?: boolean;
 }
 
 // ─── NetItem ──────────────────────────────────────────────────────────────────
@@ -117,7 +119,7 @@ function SectionLabel({color, children}: { color: string; children: React.ReactN
     );
 }
 
-export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
+export function NetworkSidebar({networksResponse, selected, onSelect, isLoading}: Props) {
     const networks = networksResponse.networks;
     const {starred, toggleStar: onStar} = useStarred();
     const [search, setSearch]           = useState('');
@@ -194,44 +196,62 @@ export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
             {/* List */}
             <ScrollArea flex={1} px="xs" pb="xs">
 
-                {/* Favourites */}
-                {!search && tab === 'all' && starredNets.length > 0 && (
-                    <Box mb="sm">
-                        <SectionLabel color="var(--mantine-color-yellow-5)">
-                            ★ Favourites
-                        </SectionLabel>
-                        {starredNets.map(renderNet)}
-                    </Box>
-                )}
-
-                {/* Core */}
-                {(tab === 'all' || tab === 'core') && coreNets.length > 0 && (
-                    <Box mb="sm">
-                        {tab === 'all' && (
-                            <SectionLabel color="var(--mantine-color-blue-4)">
-                                Core
-                            </SectionLabel>
+                {isLoading ? (
+                    <Stack gap={6} pt={4}>
+                        {Array.from({length: 8}).map((_, i) => (
+                            <Box key={i} px="sm" py={6}>
+                                <Group justify="space-between" wrap="nowrap" gap="xs">
+                                    <Stack gap={4} style={{flex: 1, minWidth: 0}}>
+                                        <Skeleton height={10} width={`${55 + (i % 4) * 10}%`} radius="sm"/>
+                                        <Skeleton height={8}  width={`${35 + (i % 3) * 8}%`}  radius="sm"/>
+                                    </Stack>
+                                    <Skeleton height={14} width={14} radius="sm"/>
+                                </Group>
+                            </Box>
+                        ))}
+                    </Stack>
+                ) : (
+                    <>
+                        {/* Favourites */}
+                        {!search && tab === 'all' && starredNets.length > 0 && (
+                            <Box mb="sm">
+                                <SectionLabel color="var(--mantine-color-yellow-5)">
+                                    ★ Favourites
+                                </SectionLabel>
+                                {starredNets.map(renderNet)}
+                            </Box>
                         )}
-                        {coreNets.map(renderNet)}
-                    </Box>
-                )}
 
-                {/* User */}
-                {(tab === 'all' || tab === 'user') && userNets.length > 0 && (
-                    <Box>
-                        {tab === 'all' && (
-                            <SectionLabel color="var(--mantine-color-cyan-4)">
-                                User
-                            </SectionLabel>
+                        {/* Core */}
+                        {(tab === 'all' || tab === 'core') && coreNets.length > 0 && (
+                            <Box mb="sm">
+                                {tab === 'all' && (
+                                    <SectionLabel color="var(--mantine-color-blue-4)">
+                                        Core
+                                    </SectionLabel>
+                                )}
+                                {coreNets.map(renderNet)}
+                            </Box>
                         )}
-                        {userNets.map(renderNet)}
-                    </Box>
-                )}
 
-                {filtered.length === 0 && (
-                    <Text size="xs" c="dimmed" ta="center" py="md">
-                        No networks match
-                    </Text>
+                        {/* User */}
+                        {(tab === 'all' || tab === 'user') && userNets.length > 0 && (
+                            <Box>
+                                {tab === 'all' && (
+                                    <SectionLabel color="var(--mantine-color-cyan-4)">
+                                        User
+                                    </SectionLabel>
+                                )}
+                                {userNets.map(renderNet)}
+                            </Box>
+                        )}
+
+                        {!isLoading && filtered.length === 0 && (
+                            <Text size="xs" c="dimmed" ta="center" py="md">
+                                No networks match
+                            </Text>
+                        )}
+                    </>
                 )}
 
             </ScrollArea>

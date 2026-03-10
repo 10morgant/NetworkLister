@@ -12,7 +12,7 @@ import {
     Box,
     Center,
     Group,
-    Loader,
+    Skeleton,
     Stack,
     Text
 }                               from "@mantine/core";
@@ -69,20 +69,30 @@ export function NetworkView({networkId, isCore}: NetworkViewProps) {
                             </ActionIcon>
                             <Stack gap={2}>
                                 <Group gap="xs">
-                                    <Text fw={700} size="md">{network?.name ?? '-'}</Text>
+                                    {machinesLoading
+                                        ? <Skeleton height={14} width={160} radius="sm"/>
+                                        : <Text fw={700} size="md">{network?.name ?? '-'}</Text>}
                                 </Group>
                                 <Text size="xs" c="dimmed" ff="monospace">
-                                    {network?.core && (
-                                        <Text component="span" c="dark.3" ml="xs">
-                                            {network?.description ? `(${network.description})` : ''}
-                                        </Text>
-                                    )}
+                                    {machinesLoading
+                                        ? <Skeleton height={10} width={100} radius="sm" mt={2}/>
+                                        : network?.core && (
+                                            <Text component="span" c="dark.3" ml="xs">
+                                                {network?.description ? `(${network.description})` : ''}
+                                            </Text>
+                                        )}
                                 </Text>
                             </Stack>
                         </Group>
 
                         {machinesLoading
-                            ? <Loader size="xs"/>
+                            ? (
+                                <Group gap="xs">
+                                    {Array.from({length: 4}).map((_, i) => (
+                                        <Skeleton key={i} height={52} width={150} radius="sm"/>
+                                    ))}
+                                </Group>
+                            )
                             : (
                                 <Group gap="xs">
                                     <StatCard label="Total" value={stats.total} minWidth={150}/>
