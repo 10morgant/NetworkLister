@@ -71,10 +71,10 @@ export default function NetworksPage() {
     }
 
     return (
-        <Group gap={0} style={{flex: 1, minHeight: 0, overflow: 'hidden'}} align="stretch">
+        <Group gap={0} style={{flex: 1, height: '100%', minHeight: 0, overflow: 'hidden'}} align="stretch">
 
             <NetworkSidebar
-                networksResponse={networks}
+                networksResponse={networks ?? {networks: []}}
                 selected={networkId}
                 onSelect={handleSelect}
             />

@@ -46,13 +46,13 @@ export function NetworkView({networkId, isCore}: NetworkViewProps) {
     const guests   = net?.guests  ?? [];
     const clashes  = net?.clashes ?? [];
 
-    const rows       = useMemo(() => buildIpRows(network, guests, clashes, net?.network.core), [network, guests, clashes, isCore]);
+    const rows       = useMemo(() => buildIpRows(network, guests, clashes, net?.network.core), [network, guests, clashes, net?.network.core]);
     const stats      = useMemo(() => networkStats(guests, clashes), [guests, clashes]);
     const clashCount = clashes.length;
 
     return (
         <>
-            <Stack gap={0} style={{flex: 1, minWidth: 0, overflow: 'hidden'}}>
+            <Stack gap={0} style={{flex: 1, minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden'}}>
 
                 {/* Header */}
                 <Box p="md" style={{borderBottom: '1px solid var(--border)', flexShrink: 0}}>
@@ -72,10 +72,9 @@ export function NetworkView({networkId, isCore}: NetworkViewProps) {
                                     <Text fw={700} size="md">{network?.name ?? '-'}</Text>
                                 </Group>
                                 <Text size="xs" c="dimmed" ff="monospace">
-                                    {network?.cidr}
-                                    {isCore && (
+                                    {network?.core && (
                                         <Text component="span" c="dark.3" ml="xs">
-                                            — full address space enumerated
+                                            {network?.description ? `(${network.description})` : ''}
                                         </Text>
                                     )}
                                 </Text>

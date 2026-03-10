@@ -112,7 +112,7 @@ export function AppLayout() {
                 main  : {background: 'var(--surface-0)'},
             }}
         >
-            <AppShell.Navbar p={0} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
+            <AppShell.Navbar p={0} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--surface-0)'}}>
 
                 {/* Logo */}
                 <Box

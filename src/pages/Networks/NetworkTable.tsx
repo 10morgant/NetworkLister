@@ -273,7 +273,7 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
     // Filter normal / empty rows
     const filteredRows = useMemo(() => rows.filter(({ip, guest}) => {
         if (!showEmpty && !guest) return false;
-        if (powerF !== 'all' && CFG[guest?.power || "poweredOn"].name !== powerF) return false;
+        if (powerF !== 'all' && CFG[guest?.power ?? 'off'].name !== powerF) return false;
         if (search) {
             const q = search.toLowerCase();
             return ip.includes(q) ||
@@ -291,7 +291,7 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
     }
 
     return (
-        <Stack gap={0} style={{flex: 1, minHeight: 0, overflow: 'hidden'}}>
+        <Stack gap={0} style={{flex: 1, minHeight: 0, height: '100%', overflow: 'hidden'}}>
 
             {/* ── Clash Banner ── */}
             {clashes.length > 0 && (
@@ -327,7 +327,7 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
             </Group>
 
             {/* ── Table ── */}
-            <Box style={{flex: 1, overflowY: 'auto'}}>
+            <Box style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
                 <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                     <Table.Thead>
                         <Table.Tr>

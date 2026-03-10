@@ -1,9 +1,7 @@
-// src/pages/Networks/NetworkSidebar.tsx
 import {
     useMemo,
     useState
 }                      from 'react';
-import {useQuery}      from '@tanstack/react-query';
 import {
     ActionIcon,
     Box,
@@ -19,14 +17,10 @@ import {
     IconStar,
     IconStarFilled
 }                      from '@tabler/icons-react';
-import {fetchMachines} from '@/api/machines';
-import {queryKeys} from '@/api/queryKeys';
 import {
     Network,
     NetworksResponse
-} from '@/types';
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-// Use the hook instead:
+}                      from '@/types';
 import {useStarred}    from '@/context/starred';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -50,13 +44,13 @@ interface NetItemProps {
 }
 
 function NetItem({net, selected, starred, cnt, on, onSelect, onStar}: NetItemProps) {
-    const active = selected === net.id;
+    const active = selected === net.name;
     const accent = net.core ? 'blue' : 'cyan';
 
     return (
         <Box
             px="sm" py={6}
-            onClick={() => onSelect(net.id)}
+            onClick={() => onSelect(net.name)}
             style={{
                 borderRadius: 'var(--mantine-radius-sm)',
                 borderLeft  : `2px solid ${active
@@ -85,7 +79,7 @@ function NetItem({net, selected, starred, cnt, on, onSelect, onStar}: NetItemPro
                     >
                         {net.name}
                     </Text>
-                    <Text size="xs" ff="monospace" c="dark.3">{net.cidr}</Text>
+                    <Text size="xs" ff="monospace" c="dark.3">{net.description}</Text>
                 </Stack>
                 <Group gap={4} wrap="nowrap">
                     {cnt > 0 && (
@@ -98,7 +92,7 @@ function NetItem({net, selected, starred, cnt, on, onSelect, onStar}: NetItemPro
                         color={starred ? 'yellow' : 'dark'}
                         onClick={e => {
                             e.stopPropagation();
-                            onStar(net.id);
+                            onStar(net.name);
                         }}
                     >
                         {starred ? <IconStarFilled size={12}/> : <IconStar size={12}/>}
@@ -129,24 +123,6 @@ export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
     const [search, setSearch]           = useState('');
     const [tab, setTab]                 = useState('all');
 
-    // All machines — used only for on/total counts per network.
-    // TanStack Query deduplicates this against any other component
-    // fetching the same key, so no extra network request is made.
-    const {data: allMachines = []} = useQuery({
-        queryKey: queryKeys.machines,
-        queryFn : fetchMachines,
-    });
-
-    // Pre-compute counts for every network in one pass
-    const countMap = useMemo(() => {
-        const map: Record<string, { total: number; on: number }> = {};
-        allMachines.forEach(m => {
-            if (!map[m.network]) map[m.network] = {total: 0, on: 0};
-            map[m.network].total++;
-            if (m.power === 'on') map[m.network].on++;
-        });
-        return map;
-    }, [allMachines]);
 
     // Filter networks based on search + tab
     const filtered = useMemo(() => {
@@ -157,14 +133,14 @@ export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
         if (search) {
             const q = search.toLowerCase();
             nets    = nets.filter(n =>
-                n.name.toLowerCase().includes(q) || n.cidr?.includes(q)
+                n.name.toLowerCase().includes(q)
             );
         }
         return nets;
     }, [networks, tab, search]);
 
     const starredNets = useMemo(
-        () => networks.filter(n => starred?.has(n.id)),
+        () => networks.filter(n => starred?.has(n.name)),
         [networks, starred]
     );
 
@@ -173,12 +149,12 @@ export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
 
     const renderNet = (net: Network) => (
         <NetItem
-            key={net.id}
+            key={net.name}
             net={net}
             selected={selected}
-            starred={starred?.has(net.id)}
-            cnt={countMap[net.id]?.total ?? 0}
-            on={countMap[net.id]?.on ?? 0}
+            starred={starred?.has(net.name)}
+            cnt={0}
+            on={0}
             onSelect={onSelect}
             onStar={onStar}
         />
@@ -192,6 +168,9 @@ export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
                 display      : 'flex',
                 flexDirection: 'column',
                 background   : 'var(--surface-1)',
+                height       : '100%',
+                minHeight    : 0,
+                overflow     : 'hidden',
             }}
         >
             {/* Search */}

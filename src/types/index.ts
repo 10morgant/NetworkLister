@@ -1,9 +1,9 @@
 export type PowerState = 'on' | 'off' | 'suspended';
 
 export interface Network {
-    id: string;
+    id: number;
     name: string;
-    cidr?: string;
+    description?: string;
     core: boolean;
 }
 
