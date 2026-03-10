@@ -71,8 +71,8 @@ function GroupItem({group, selected, isOpen, onGroupClick, onSubGroupClick}: Gro
                     px="sm" py={6} gap="xs" wrap="nowrap"
                     style={{
                         borderRadius: 'var(--mantine-radius-sm)',
-                        borderLeft  : `2px solid ${isSelGrp ? 'var(--mantine-color-violet-5)' : 'transparent'}`,
-                        background  : isSelGrp ? 'var(--mantine-color-violet-light)' : 'transparent',
+                        borderLeft  : `2px solid ${isSelGrp ? 'var(--mantine-color-blue-5)' : 'transparent'}`,
+                        background  : isSelGrp ? 'var(--mantine-color-blue-light)' : 'transparent',
                     }}
                 >
                     <IconChevronRight
@@ -80,7 +80,7 @@ function GroupItem({group, selected, isOpen, onGroupClick, onSubGroupClick}: Gro
                         color="var(--mantine-color-dark-3)"
                         style={{transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0}}
                     />
-                    <Text size="sm" fw={600} c={isSelGrp ? 'violet.3' : 'dimmed'} style={{flex: 1}} truncate>
+                    <Text size="sm" fw={600} c={isSelGrp ? 'blue.3' : 'dimmed'} style={{flex: 1}} truncate>
                         {group.name}
                     </Text>
                     <Text size="xs" ff="monospace" c="dark.3">{totalGuests}</Text>
@@ -97,11 +97,11 @@ function GroupItem({group, selected, isOpen, onGroupClick, onSubGroupClick}: Gro
                                     px="sm" py={5} gap="xs" wrap="nowrap"
                                     style={{
                                         borderRadius: 'var(--mantine-radius-sm)',
-                                        borderLeft  : `2px solid ${isSel ? 'var(--mantine-color-violet-4)' : 'transparent'}`,
-                                        background  : isSel ? 'var(--mantine-color-violet-light)' : 'transparent',
+                                        borderLeft  : `2px solid ${isSel ? 'var(--mantine-color-blue-4)' : 'transparent'}`,
+                                        background  : isSel ? 'var(--mantine-color-blue-light)' : 'transparent',
                                     }}
                                 >
-                                    <Text size="sm" c={isSel ? 'violet.3' : 'dimmed'} style={{flex: 1}} truncate>
+                                    <Text size="sm" c={isSel ? 'blue.3' : 'dimmed'} style={{flex: 1}} truncate>
                                         {sub.name}
                                     </Text>
                                     <Text size="xs" ff="monospace" c="dark.4">{sub.guests.length}</Text>
@@ -165,7 +165,7 @@ export function FoldersSidebar({selected, onSelect}: Props) {
         >
             {/* Header */}
             <Box p="xs" style={{borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0}}>
-                <Text size="xs" fw={700} tt="uppercase" c="violet.4" style={{letterSpacing: '0.1em'}}>Groups</Text>
+                <Text size="xs" fw={700} tt="uppercase" c="blue.4" style={{letterSpacing: '0.1em'}}>Groups</Text>
             </Box>
 
             <ScrollArea flex={1}>
@@ -177,12 +177,12 @@ export function FoldersSidebar({selected, onSelect}: Props) {
                                 px="sm" py={6} gap="xs" wrap="nowrap"
                                 style={{
                                     borderRadius: 'var(--mantine-radius-sm)',
-                                    borderLeft  : `2px solid ${isAllSelected ? 'var(--mantine-color-violet-5)' : 'transparent'}`,
-                                    background  : isAllSelected ? 'var(--mantine-color-violet-light)' : 'transparent',
+                                    borderLeft  : `2px solid ${isAllSelected ? 'var(--mantine-color-blue-5)' : 'transparent'}`,
+                                    background  : isAllSelected ? 'var(--mantine-color-blue-light)' : 'transparent',
                                 }}
                             >
-                                <IconList size={12} color={isAllSelected ? 'var(--mantine-color-violet-3)' : 'var(--mantine-color-dark-3)'} style={{flexShrink: 0}}/>
-                                <Text size="sm" fw={600} c={isAllSelected ? 'violet.3' : 'dimmed'} style={{flex: 1}}>
+                                <IconList size={12} color={isAllSelected ? 'var(--mantine-color-blue-3)' : 'var(--mantine-color-dark-3)'} style={{flexShrink: 0}}/>
+                                <Text size="sm" fw={600} c={isAllSelected ? 'blue.3' : 'dimmed'} style={{flex: 1}}>
                                     All Guests
                                 </Text>
                             </Group>

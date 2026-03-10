@@ -204,6 +204,76 @@ function GuestTableHead() {
     );
 }
 
+// ── Sub-group stat pill ───────────────────────────────────────────────────────
+
+function StatPill({label, value, color = 'dark.3', valueWidth = 32}: {
+    label: string;
+    value: string | number;
+    color?: string;
+    valueWidth?: number;
+}) {
+    return (
+        <Group gap={4} wrap="nowrap">
+            <Text size="xs" c="dark.4" style={{flexShrink: 0}}>{label}</Text>
+            <Text size="xs" fw={600} ff="monospace" c={color}
+                  style={{minWidth: valueWidth, textAlign: 'right'}}>
+                {value}
+            </Text>
+        </Group>
+    );
+}
+
+function guestStats(guests: Guest[]) {
+    const total    = guests.length;
+    const on       = guests.filter(g => g.power === 'on').length;
+    const off      = guests.filter(g => g.power === 'off').length;
+    const suspended = guests.filter(g => g.power === 'suspended').length;
+    const totalCpu = guests.reduce((n, g) => n + g.cpu, 0);
+    const totalRam = guests.reduce((n, g) => n + g.ram, 0);
+    const ramLabel = totalRam >= 1024 ? `${(totalRam / 1024).toFixed(1)}T` : `${totalRam}G`;
+    return {total, on, off, suspended, totalCpu, ramLabel};
+}
+
+/** Compact inline stats used in sub-group card headers */
+function SubGroupStats({guests}: {guests: Guest[]}) {
+    const {total, on, off, totalCpu, ramLabel} = guestStats(guests);
+    return (
+        <Group gap={6} wrap="nowrap" style={{flexShrink: 0, width: 360}}>
+            <StatPill label="total" value={total}    valueWidth={28}/>
+            <Text size="xs" c="dark.6" style={{flexShrink: 0}}>·</Text>
+            <StatPill label="on"    value={on}       valueWidth={28} color="teal.4"/>
+            <StatPill label="off"   value={off}      valueWidth={28} color="red.5"/>
+            <Text size="xs" c="dark.6" style={{flexShrink: 0}}>·</Text>
+            <StatPill label="vCPU"  value={totalCpu} valueWidth={44}/>
+            <StatPill label="RAM"   value={ramLabel} valueWidth={56}/>
+        </Group>
+    );
+}
+
+/** Full-width stats bar shown beneath the toolbar in group / sub-group views */
+function GuestStatsBar({guests}: {guests: Guest[]}) {
+    const {total, on, off, suspended, totalCpu, ramLabel} = guestStats(guests);
+    return (
+        <Group
+            px="md" py={6} gap="lg" wrap="nowrap"
+            style={{
+                borderBottom: '1px solid var(--mantine-color-dark-5)',
+                background  : 'var(--mantine-color-dark-8)',
+                flexShrink  : 0,
+            }}
+        >
+            <StatPill label="total"     value={total}     valueWidth={36}/>
+            <Text size="xs" c="dark.6">·</Text>
+            <StatPill label="on"        value={on}        valueWidth={36} color="teal.4"/>
+            <StatPill label="off"       value={off}       valueWidth={36} color="red.5"/>
+            <StatPill label="suspended" value={suspended} valueWidth={36} color="yellow.6"/>
+            <Text size="xs" c="dark.6">·</Text>
+            <StatPill label="vCPU"      value={totalCpu}  valueWidth={48}/>
+            <StatPill label="RAM"       value={ramLabel}  valueWidth={56}/>
+        </Group>
+    );
+}
+
 // ── AllGuestsView — grouped by group / sub_group ──────────────────────────────
 
 interface AllGuestsViewProps {
@@ -213,7 +283,6 @@ interface AllGuestsViewProps {
 }
 
 function AllGuestsView({guests, expanded, onToggle}: AllGuestsViewProps) {
-    // group → subGroup → guests[]
     const grouped = useMemo(() => {
         const map = new Map<string, Map<string, Guest[]>>();
         guests.forEach(g => {
@@ -234,68 +303,136 @@ function AllGuestsView({guests, expanded, onToggle}: AllGuestsViewProps) {
             }));
     }, [guests]);
 
+    // Track which sub-groups are open — default ALL open.
+    // Initialise lazily so the first render already has all keys.
+    const [openSubs, setOpenSubs] = useState<Set<string>>(new Set());
+
+    // Derive the full set of keys from grouped so we can treat "empty set = all open"
+    const allKeys = useMemo(
+        () => new Set(grouped.flatMap(({group, subGroups}) => subGroups.map(s => `${group}::${s.sub}`))),
+        [grouped]
+    );
+    // Empty openSubs means "nothing has been touched yet" → treat as all open
+    const effectiveOpen = openSubs.size === 0 ? allKeys : openSubs;
+
+    const toggleSub = (key: string) =>
+        setOpenSubs(prev => {
+            // If we were in "all open" state, materialise the full set first then toggle
+            const base = prev.size === 0 ? new Set(allKeys) : new Set(prev);
+            base.has(key) ? base.delete(key) : base.add(key);
+            return base;
+        });
+
+    const expandGroup = (group: string, subGroups: {sub: string}[]) =>
+        setOpenSubs(prev => {
+            const n = prev.size === 0 ? new Set(allKeys) : new Set(prev);
+            subGroups.forEach(s => n.add(`${group}::${s.sub}`));
+            return n;
+        });
+
+    const collapseGroup = (group: string, subGroups: {sub: string}[]) =>
+        setOpenSubs(prev => {
+            const n = prev.size === 0 ? new Set(allKeys) : new Set(prev);
+            subGroups.forEach(s => n.delete(`${group}::${s.sub}`));
+            return n;
+        });
+
     if (grouped.length === 0) {
         return <Text ta="center" c="dimmed" py="xl">No guests found</Text>;
     }
 
     return (
-        <>
-            {grouped.map(({group, subGroups}) => (
-                <Box key={group}>
-                    {/* Group heading */}
-                    <Box
-                        px="md" py={6}
-                        style={{
-                            borderBottom: '1px solid var(--mantine-color-dark-5)',
-                            borderTop   : '1px solid var(--mantine-color-dark-5)',
-                            background  : 'var(--mantine-color-dark-8)',
-                            position    : 'sticky',
-                            top         : 0,
-                            zIndex      : 2,
-                        }}
-                    >
-                        <Text size="xs" fw={700} tt="uppercase" c="violet.4" style={{letterSpacing: '0.08em'}}>
-                            {group}
-                        </Text>
-                    </Box>
+        <Stack gap={0} px="md" pt="sm" pb="md">
+            {grouped.map(({group, subGroups}, gi) => {
+                const totalGuests = subGroups.reduce((n, s) => n + s.guests.length, 0);
+                const allOpen     = subGroups.every(s => effectiveOpen.has(`${group}::${s.sub}`));
 
-                    {subGroups.map(({sub, guests: sg}) => (
-                        <Box key={sub}>
-                            {/* Sub-group heading */}
-                            <Box
-                                px="md" py={4}
-                                style={{
-                                    borderBottom: '1px solid var(--mantine-color-dark-6)',
-                                    background  : 'var(--mantine-color-dark-7)',
-                                    position    : 'sticky',
-                                    top         : 29,   // sits below the group heading
-                                    zIndex      : 1,
-                                }}
+                return (
+                    <Box key={group} mb="md">
+                        {/* ── Group title / divider ── */}
+                        <Group gap="md" mb={6} align="center">
+                            {gi > 0 && <Box style={{height: 1, background: 'var(--mantine-color-dark-5)', flex: 0, width: 12}}/>}
+                            <Text size="xs" fw={700} tt="uppercase" c="blue.4" style={{letterSpacing: '0.12em', flexShrink: 0}}>
+                                {group}
+                            </Text>
+                            <Box style={{height: 1, background: 'var(--mantine-color-dark-5)', flex: 1}}/>
+                            <Text size="xs" ff="monospace" c="dark.4" style={{flexShrink: 0}}>
+                                {subGroups.length} sub-groups · {totalGuests} guests
+                            </Text>
+                            <Text
+                                size="xs" c="blue.6"
+                                style={{cursor: 'pointer', userSelect: 'none', flexShrink: 0}}
+                                onClick={() => allOpen ? collapseGroup(group, subGroups) : expandGroup(group, subGroups)}
                             >
-                                <Group gap="xs">
-                                    <Text size="xs" fw={600} c="dimmed">{sub}</Text>
-                                    <Text size="xs" ff="monospace" c="dark.4">({sg.length})</Text>
-                                </Group>
-                            </Box>
+                                {allOpen ? 'Collapse all' : 'Expand all'}
+                            </Text>
+                        </Group>
 
-                            <Table highlightOnHover verticalSpacing="xs" fz="xs">
-                                <GuestTableHead/>
-                                <Table.Tbody>
-                                    {sg.map(m => (
-                                        <GuestRow
-                                            key={m.id}
-                                            guest={m}
-                                            isExpanded={expanded.has(m.id)}
-                                            onToggle={onToggle}
-                                        />
-                                    ))}
-                                </Table.Tbody>
-                            </Table>
-                        </Box>
-                    ))}
-                </Box>
-            ))}
-        </>
+                        {/* ── Sub-group cards ── */}
+                        <Stack gap={6}>
+                            {subGroups.map(({sub, guests: sg}) => {
+                                const key    = `${group}::${sub}`;
+                                const isOpen = effectiveOpen.has(key);
+                                return (
+                                    <Box
+                                        key={sub}
+                                        style={{
+                                            border      : `1px solid ${isOpen ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-dark-6)'}`,
+                                            borderRadius: 'var(--mantine-radius-md)',
+                                            overflow    : 'hidden',
+                                            transition  : 'border-color 0.15s',
+                                        }}
+                                    >
+                                        {/* Sub-group header */}
+                                        <Group
+                                            px="md" py={7} gap="sm"
+                                            style={{
+                                                background : isOpen ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-dark-8)',
+                                                borderLeft : `4px solid ${isOpen ? 'var(--mantine-color-blue-5)' : 'var(--mantine-color-dark-5)'}`,
+                                                cursor     : 'pointer',
+                                                userSelect : 'none',
+                                                transition : 'background 0.15s, border-color 0.15s',
+                                                flexWrap   : 'nowrap',
+                                                minWidth   : 0,
+                                            }}
+                                            onClick={() => toggleSub(key)}
+                                        >
+                                            <IconChevronRight
+                                                size={13}
+                                                color={isOpen ? 'var(--mantine-color-blue-4)' : 'var(--mantine-color-dark-3)'}
+                                                style={{transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0}}
+                                            />
+                                            <Text size="sm" fw={600} c={isOpen ? 'blue.3' : 'dimmed'}
+                                                  style={{flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                                {sub}
+                                            </Text>
+                                            {/* Stats — visible even when collapsed so you can triage without opening */}
+                                            <SubGroupStats guests={sg}/>
+                                        </Group>
+
+                                        <Collapse in={isOpen}>
+                                            <Table highlightOnHover verticalSpacing="xs" fz="xs">
+                                                <GuestTableHead/>
+                                                <Table.Tbody>
+                                                    {sg.map(m => (
+                                                        <GuestRow
+                                                            key={m.id}
+                                                            guest={m}
+                                                            isExpanded={expanded.has(m.id)}
+                                                            onToggle={onToggle}
+                                                        />
+                                                    ))}
+                                                </Table.Tbody>
+                                            </Table>
+                                        </Collapse>
+                                    </Box>
+                                );
+                            })}
+                        </Stack>
+                    </Box>
+                );
+            })}
+        </Stack>
     );
 }
 
@@ -397,6 +534,7 @@ export default function FoldersPage() {
 
                     {!isLoading && !isError && !isAll && (
                         <>
+                            <GuestStatsBar guests={filtered}/>
                             <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                                 <GuestTableHead/>
                                 <Table.Tbody>
