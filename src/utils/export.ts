@@ -8,8 +8,8 @@ export function exportJson(machines: Machine[], filename = 'vms') {
 
 export function exportCsv(machines: Machine[], filename = 'vms') {
     const headers: (keyof Machine)[] = [
-        'name', 'ip', 'power', 'folder', 'group', 'subgroup',
-        'owner', 'cpus', 'ram', 'created', 'uptime', 'network',
+        'name', 'ip', 'power', 'folder', 'group', 'sub_group',
+        'owner', 'cpu', 'ram', 'created', 'power_on_time', 'os',
     ];
 
     const escape = (val: unknown) => {

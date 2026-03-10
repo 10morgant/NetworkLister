@@ -1,6 +1,6 @@
-import type {
-    IpRow,
-    Machine,
+import {
+    IPGuest,
+    IPGuests,
     Network
 } from '@/types';
 
@@ -14,31 +14,42 @@ function cidrRange(cidr: string) {
     return {start, end: (start | ~mask) >>> 0};
 }
 
+/**
+ * For core networks, pad `guests` to include every IP in the CIDR as a
+ * nullable entry (guest: null) so the table shows the full address space.
+ * Clash IPs are excluded from padding (they have their own rows).
+ */
 export function buildIpRows(
-    netId: string,
     net: Network | undefined,
-    machines: Machine[],
-): IpRow[] {
-    if (!net) return [];
-    if (net.type !== 'core') return machines.map(m => ({ip: m.ip, machine: m}));
+    guests: IPGuest[],
+    clashes: IPGuests[],
+    pad: boolean = false
+): Array<IPGuest | { ip: string; guest: null }> {
+    if (!net) return guests;
+    if (!pad || !net.cidr) return guests;
 
-    const {start, end}  = cidrRange(net.cidr);
-    const map           = Object.fromEntries(machines.map(m => [m.ip, m]));
-    const rows: IpRow[] = [];
+    const clashIps  = new Set(clashes.map(c => c.ip));
+    const guestMap  = Object.fromEntries(guests.map(g => [g.ip, g]));
+    const {start, end} = cidrRange(net.cidr);
+    const rows: Array<IPGuest | { ip: string; guest: null }> = [];
+
     for (let i = start; i <= end; i++) {
         const ip = intToIp(i);
-        rows.push({ip, machine: map[ip] ?? null});
+        if (clashIps.has(ip)) continue; // clash rows are rendered separately
+        rows.push(guestMap[ip] ?? {ip, guest: null});
     }
     return rows;
 }
 
-export function networkStats(rows: IpRow[]) {
-    const ms = rows.filter(r => r.machine);
+export function networkStats(guests: IPGuest[], clashes: IPGuests[]) {
+    const normalMachines = guests.map(g => g.guest);
+    const clashMachines  = clashes.flatMap(c => c.guests);
+    const all            = [...normalMachines, ...clashMachines];
     return {
-        total    : rows.length,
-        allocated: ms.length,
-        on       : ms.filter(r => r.machine!.power === 'on').length,
-        off      : ms.filter(r => r.machine!.power === 'off').length,
+        total    : guests.length + clashes.length,
+        allocated: all.length,
+        on       : all.filter(m => m.power === 'on').length,
+        off      : all.filter(m => m.power === 'off').length,
     };
 }
 

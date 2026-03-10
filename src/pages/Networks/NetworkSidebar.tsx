@@ -20,8 +20,11 @@ import {
     IconStarFilled
 }                      from '@tabler/icons-react';
 import {fetchMachines} from '@/api/machines';
-import {queryKeys}     from '@/api/queryKeys';
-import type {Network}  from '@/types';
+import {queryKeys} from '@/api/queryKeys';
+import {
+    Network,
+    NetworksResponse
+} from '@/types';
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 // Use the hook instead:
 import {useStarred}    from '@/context/starred';
@@ -29,7 +32,7 @@ import {useStarred}    from '@/context/starred';
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-    networks: Network[];
+    networksResponse: NetworksResponse;
     selected: string;
     onSelect: (id: string) => void;
 }
@@ -48,7 +51,7 @@ interface NetItemProps {
 
 function NetItem({net, selected, starred, cnt, on, onSelect, onStar}: NetItemProps) {
     const active = selected === net.id;
-    const accent = net.type === 'core' ? 'blue' : 'cyan';
+    const accent = net.core ? 'blue' : 'cyan';
 
     return (
         <Box
@@ -120,7 +123,8 @@ function SectionLabel({color, children}: { color: string; children: React.ReactN
     );
 }
 
-export function NetworkSidebar({networks, selected, onSelect}: Props) {
+export function NetworkSidebar({networksResponse, selected, onSelect}: Props) {
+    const networks = networksResponse.networks;
     const {starred, toggleStar: onStar} = useStarred();
     const [search, setSearch]           = useState('');
     const [tab, setTab]                 = useState('all');
@@ -147,11 +151,13 @@ export function NetworkSidebar({networks, selected, onSelect}: Props) {
     // Filter networks based on search + tab
     const filtered = useMemo(() => {
         let nets = networks;
-        if (tab !== 'all') nets = nets.filter(n => n.type === tab);
+        if (tab === 'core') nets = nets.filter(n => n.core);
+        if (tab === 'user') nets = nets.filter(n => !n.core);
+
         if (search) {
             const q = search.toLowerCase();
             nets    = nets.filter(n =>
-                n.name.toLowerCase().includes(q) || n.cidr.includes(q)
+                n.name.toLowerCase().includes(q) || n.cidr?.includes(q)
             );
         }
         return nets;
@@ -162,8 +168,8 @@ export function NetworkSidebar({networks, selected, onSelect}: Props) {
         [networks, starred]
     );
 
-    const coreNets = filtered.filter(n => n.type === 'core');
-    const userNets = filtered.filter(n => n.type === 'user');
+    const coreNets = filtered.filter(n => n.core);
+    const userNets = filtered.filter(n => !n.core);
 
     const renderNet = (net: Network) => (
         <NetItem

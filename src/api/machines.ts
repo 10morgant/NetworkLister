@@ -1,5 +1,8 @@
-import type {Machine} from '@/types';
-import {MACHINES}     from '@/data/mock';
+import {
+    Machine,
+    NetworkGuests
+} from '@/types';
+import {MACHINES} from '@/data/mock';
 
 // Swap these functions for real fetch calls when ready.
 // e.g. return fetch('/api/machines').then(r => r.json())
@@ -8,8 +11,10 @@ export async function fetchMachines(): Promise<Machine[]> {
     return MACHINES;
 }
 
-export async function fetchMachinesByNetwork(networkId: string): Promise<Machine[]> {
-    return MACHINES.filter(m => m.network === networkId);
+export async function fetchMachinesByNetwork(networkId: string): Promise<NetworkGuests> {
+    const res = await fetch(`http://localhost:8000/networks/${networkId}`);
+    if (!res.ok) throw new Error("Network error");
+    return res.json();
 }
 
 export async function fetchMachinesOlderThan(ms: number): Promise<Machine[]> {

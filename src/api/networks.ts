@@ -1,8 +1,13 @@
-import type {Network} from '@/types';
-import {NETWORKS}     from '@/data/mock';
+import {
+    Network,
+    NetworksResponse
+} from '@/types';
+import {NETWORKS} from '@/data/mock';
 
-export async function fetchNetworks(): Promise<Network[]> {
-    return NETWORKS;
+export async function fetchNetworks(): Promise<NetworksResponse> {
+    const res = await fetch(`http://localhost:8000/networks`);
+    if (!res.ok) throw new Error("Network error");
+    return res.json();
 }
 
 export async function fetchNetwork(id: string): Promise<Network | undefined> {

@@ -3,11 +3,13 @@ import {
     useState
 }                   from 'react';
 import {
+    Anchor,
     Box,
     Center,
     Collapse,
     Group,
     Loader,
+    ScrollArea,
     SegmentedControl,
     SimpleGrid,
     Stack,
@@ -15,25 +17,225 @@ import {
     Table,
     Text,
     TextInput,
+    ThemeIcon,
+    Tooltip,
 }                   from '@mantine/core';
 import {
+    IconAlertTriangle,
     IconChevronRight,
-    IconSearch
-}                   from '@tabler/icons-react';
-import {PowerBadge} from '@/components/shared/PowerBadge';
-import type {IpRow} from '@/types';
+    IconSearch,
+}               from '@tabler/icons-react';
+import {
+    CFG,
+    PowerBadge
+} from '@/components/shared/PowerBadge';
+import type {
+    IPGuest,
+    IPGuests,
+    Machine
+}               from '@/types';
 import {
     fmtDate,
     fmtUptime
 }                   from './utils';
 
 interface Props {
-    rows: IpRow[];
+    /** Normal rows: one IP → one guest (or null for unallocated/padded IPs) */
+    rows: Array<IPGuest | { ip: string; guest: null }>;
+    /** Clash rows: one IP → multiple guests */
+    clashes: IPGuests[];
     isCore: boolean;
     isLoading: boolean;
 }
 
-export function NetworkTable({rows, isCore, isLoading}: Props) {
+// ─── Clash Banner ─────────────────────────────────────────────────────────────
+
+interface ClashBannerProps {
+    clashes: IPGuests[];
+    onJumpTo: (ip: string) => void;
+}
+
+function ClashBanner({clashes, onJumpTo}: ClashBannerProps) {
+    const [open, setOpen] = useState(true);
+
+    return (
+        <Box
+            style={{
+                borderBottom: '1px solid var(--mantine-color-orange-8)',
+                background  : 'color-mix(in srgb, var(--mantine-color-orange-9) 30%, transparent)',
+                flexShrink  : 0,
+            }}
+        >
+            <Group
+                px="md" py="xs" gap="sm"
+                style={{cursor: 'pointer', userSelect: 'none'}}
+                onClick={() => setOpen(o => !o)}
+            >
+                <ThemeIcon size="xs" color="orange" variant="transparent">
+                    <IconAlertTriangle size={14}/>
+                </ThemeIcon>
+                <Text size="xs" fw={700} c="orange.4">
+                    {clashes.length} IP clash{clashes.length !== 1 ? 'es' : ''} detected
+                </Text>
+                <Text size="xs" c="dimmed">
+                    — multiple guests share the same IP address
+                </Text>
+                <IconChevronRight
+                    size={12}
+                    color="var(--mantine-color-dimmed)"
+                    style={{
+                        marginLeft: 'auto',
+                        transform : open ? 'rotate(90deg)' : 'none',
+                        transition: 'transform 0.2s',
+                    }}
+                />
+            </Group>
+
+            <Collapse in={open}>
+                <ScrollArea mah={180} px="md" pb="sm">
+                    <Stack gap={4}>
+                        {clashes.map(({ip, guests}) => (
+                            <Group key={ip} gap="xs" align="flex-start" wrap="nowrap">
+                                <Anchor
+                                    size="xs" ff="monospace" fw={600} c="orange.3"
+                                    style={{minWidth: 120, flexShrink: 0}}
+                                    onClick={e => { e.preventDefault(); onJumpTo(ip); }}
+                                >
+                                    {ip}
+                                </Anchor>
+                                <Group gap={4} wrap="wrap">
+                                    {guests.map(m => (
+                                        <Group
+                                            key={m.id ?? m.name}
+                                            gap={4} px={6} py={2}
+                                            style={{
+                                                borderRadius: 'var(--mantine-radius-sm)',
+                                                background  : 'var(--mantine-color-dark-6)',
+                                                border      : '1px solid var(--mantine-color-dark-4)',
+                                            }}
+                                        >
+                                            <PowerBadge state={m.power}/>
+                                            <Text size="xs" ff="monospace" fw={500}>{m.name}</Text>
+                                            {m.owner && <Text size="xs" c="dimmed">({m.owner})</Text>}
+                                        </Group>
+                                    ))}
+                                </Group>
+                            </Group>
+                        ))}
+                    </Stack>
+                </ScrollArea>
+            </Collapse>
+        </Box>
+    );
+}
+
+// ─── Clash Row ────────────────────────────────────────────────────────────────
+
+interface ClashRowProps {
+    ip: string;
+    guests: Machine[];
+    expanded: boolean;
+    onToggle: () => void;
+}
+
+function ClashRow({ip, guests, expanded, onToggle}: ClashRowProps) {
+    return (
+        <>
+            <Table.Tr
+                data-ip={ip}
+                onClick={onToggle}
+                style={{
+                    cursor       : 'pointer',
+                    background   : 'color-mix(in srgb, var(--mantine-color-orange-9) 20%, transparent)',
+                    outline      : '1px solid var(--mantine-color-orange-8)',
+                    outlineOffset: '-1px',
+                }}
+            >
+                <Table.Td>
+                    <IconChevronRight
+                        size={12}
+                        color="var(--mantine-color-orange-4)"
+                        style={{transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s'}}
+                    />
+                </Table.Td>
+                <Table.Td ff="monospace" c="orange.4" fw={600}>{ip}</Table.Td>
+                <Table.Td colSpan={6}>
+                    <Group gap={6} wrap="wrap">
+                        <Tooltip label="IP clash — multiple guests share this address" withArrow>
+                            <ThemeIcon size={14} color="orange" variant="transparent" style={{marginRight: 4}}>
+                                <IconAlertTriangle size={14}/>
+                            </ThemeIcon>
+                        </Tooltip>
+                        {guests.map(m => (
+                            <Group
+                                key={m.id ?? m.name}
+                                gap={4} px={6} py={2}
+                                style={{
+                                    borderRadius: 'var(--mantine-radius-sm)',
+                                    background  : 'var(--mantine-color-dark-7)',
+                                    border      : '1px solid var(--mantine-color-orange-9)',
+                                }}
+                            >
+                                <PowerBadge state={m.power}/>
+                                <Text size="xs" ff="monospace" fw={500}>{m.name}</Text>
+                            </Group>
+                        ))}
+                        <Text size="xs" c="orange.6" ml={4}>{guests.length} guests — clash</Text>
+                    </Group>
+                </Table.Td>
+            </Table.Tr>
+
+            <Table.Tr style={{background: 'var(--mantine-color-dark-8)'}}>
+                <Table.Td colSpan={8} p={0}>
+                    <Collapse in={expanded}>
+                        <Stack gap={0} px="xl" py="sm">
+                            {guests.map((m, idx) => (
+                                <Box
+                                    key={m.id ?? m.name}
+                                    py="xs"
+                                    style={{borderTop: idx > 0 ? '1px solid var(--mantine-color-dark-6)' : 'none'}}
+                                >
+                                    <Group gap="xs" mb={6}>
+                                        <PowerBadge state={m.power}/>
+                                        <Text size="xs" ff="monospace" fw={600} c="orange.3">{m.name}</Text>
+                                        <Text size="xs" c="dimmed">— Clash #{idx + 1}</Text>
+                                    </Group>
+                                    <MachineDetail machine={m}/>
+                                </Box>
+                            ))}
+                        </Stack>
+                    </Collapse>
+                </Table.Td>
+            </Table.Tr>
+        </>
+    );
+}
+
+// ─── Shared detail grid ───────────────────────────────────────────────────────
+
+function MachineDetail({machine: m}: { machine: Machine }) {
+    return (
+        <SimpleGrid cols={6}>
+            {([
+                ['Folder',    m.folder],
+                ['Group',     m.group],
+                ['Sub-Group', m.sub_group],
+                ['Owner',     m.owner],
+                ['Created',   fmtDate(m.created)],
+                ['Uptime',    m.power === 'on' ? fmtUptime(m.power_on_time) + ' ago' : '—'],
+            ] as [string, string][]).map(([l, v]) => (
+                <Stack key={l} gap={2}>
+                    <Text size="xs" tt="uppercase" c="dimmed" style={{letterSpacing: '0.08em'}}>{l}</Text>
+                    <Text size="xs">{v ?? '—'}</Text>
+                </Stack>
+            ))}
+        </SimpleGrid>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
     const [search, setSearch]       = useState('');
     const [powerF, setPowerF]       = useState('all');
     const [showEmpty, setShowEmpty] = useState(true);
@@ -46,44 +248,85 @@ export function NetworkTable({rows, isCore, isLoading}: Props) {
             return n;
         });
 
-    const filtered = useMemo(() => rows.filter(({ip, machine}) => {
-        if (!showEmpty && !machine) return false;
-        if (powerF !== 'all' && machine?.power !== powerF) return false;
+    const jumpTo = (ip: string) => {
+        setExpanded(prev => new Set(prev).add(ip));
+        setTimeout(() => {
+            document.querySelector(`[data-ip="${ip}"]`)
+                     ?.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }, 50);
+    };
+
+    // Filter clash rows
+    const filteredClashes = useMemo(() => clashes.filter(({ip, guests}) => {
+        if (powerF !== 'all' && !guests.some(m => CFG[m.power].name === powerF)) return false;
         if (search) {
             const q = search.toLowerCase();
-            return ip.includes(q) || machine?.name?.toLowerCase().includes(q) ||
-                machine?.owner?.toLowerCase().includes(q) || machine?.group?.toLowerCase().includes(q);
+            return ip.includes(q) || guests.some(m =>
+                m.name?.toLowerCase().includes(q) ||
+                m.owner?.toLowerCase().includes(q) ||
+                m.group?.toLowerCase().includes(q)
+            );
+        }
+        return true;
+    }), [clashes, powerF, search]);
+
+    // Filter normal / empty rows
+    const filteredRows = useMemo(() => rows.filter(({ip, guest}) => {
+        if (!showEmpty && !guest) return false;
+        if (powerF !== 'all' && CFG[guest?.power || "poweredOn"].name !== powerF) return false;
+        if (search) {
+            const q = search.toLowerCase();
+            return ip.includes(q) ||
+                guest?.name?.toLowerCase().includes(q) ||
+                guest?.owner?.toLowerCase().includes(q) ||
+                guest?.group?.toLowerCase().includes(q);
         }
         return true;
     }), [rows, showEmpty, powerF, search]);
 
+    const totalVisible = filteredRows.length + filteredClashes.length;
+
     if (isLoading) {
-        return (
-            <Center style={{flex: 1}}>
-                <Loader size="sm"/>
-            </Center>
-        );
+        return <Center style={{flex: 1}}><Loader size="sm"/></Center>;
     }
 
     return (
         <Stack gap={0} style={{flex: 1, minHeight: 0, overflow: 'hidden'}}>
-            {/* Toolbar */}
+
+            {/* ── Clash Banner ── */}
+            {clashes.length > 0 && (
+                <ClashBanner clashes={clashes} onJumpTo={jumpTo}/>
+            )}
+
+            {/* ── Toolbar ── */}
             <Group px="md" py="xs" gap="sm"
                    style={{borderBottom: '1px solid var(--mantine-color-dark-5)', flexShrink: 0}} wrap="wrap">
-                <TextInput placeholder="Search IP, name, owner…" leftSection={<IconSearch size={14}/>}
-                           size="xs" value={search} onChange={e => setSearch(e.currentTarget.value)}
-                           style={{flex: '1 1 180px', maxWidth: 280}}/>
-                <SegmentedControl size="xs"
-                                  data={['all', 'on', 'off', 'suspended']}
-                                  value={powerF} onChange={setPowerF}/>
+                <TextInput
+                    placeholder="Search IP, name, owner…"
+                    leftSection={<IconSearch size={14}/>}
+                    size="xs"
+                    value={search}
+                    onChange={e => setSearch(e.currentTarget.value)}
+                    style={{flex: '1 1 180px', maxWidth: 280}}
+                />
+                <SegmentedControl
+                    size="xs"
+                    data={['all', 'on', 'off', 'suspended']}
+                    value={powerF}
+                    onChange={setPowerF}
+                />
                 {isCore && (
-                    <Switch size="xs" label="Show empty IPs" checked={showEmpty}
-                            onChange={e => setShowEmpty(e.currentTarget.checked)}/>
+                    <Switch
+                        size="xs"
+                        label="Show empty IPs"
+                        checked={showEmpty}
+                        onChange={e => setShowEmpty(e.currentTarget.checked)}
+                    />
                 )}
-                <Text size="xs" c="dimmed" ml="auto" ff="monospace">{filtered.length} rows</Text>
+                <Text size="xs" c="dimmed" ml="auto" ff="monospace">{totalVisible} rows</Text>
             </Group>
 
-            {/* Table */}
+            {/* ── Table ── */}
             <Box style={{flex: 1, overflowY: 'auto'}}>
                 <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                     <Table.Thead>
@@ -99,56 +342,62 @@ export function NetworkTable({rows, isCore, isLoading}: Props) {
                         </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
-                        {filtered.map(({ip, machine}) => {
+
+                        {/* ── Clash rows first ── */}
+                        {filteredClashes.map(({ip, guests}) => (
+                            <ClashRow
+                                key={ip}
+                                ip={ip}
+                                guests={guests}
+                                expanded={expanded.has(ip)}
+                                onToggle={() => toggle(ip)}
+                            />
+                        ))}
+
+                        {/* ── Normal / empty rows ── */}
+                        {filteredRows.map(({ip, guest}) => {
                             const isExp = expanded.has(ip);
                             return (
                                 <>
                                     <Table.Tr
                                         key={ip}
-                                        onClick={() => machine && toggle(ip)}
-                                        style={{cursor: machine ? 'pointer' : 'default', opacity: machine ? 1 : 0.3}}
+                                        data-ip={ip}
+                                        onClick={() => guest && toggle(ip)}
+                                        style={{
+                                            cursor : guest ? 'pointer' : 'default',
+                                            opacity: guest ? 1 : 0.35,
+                                        }}
                                     >
                                         <Table.Td>
-                                            {machine && (
-                                                <IconChevronRight size={12} color="var(--mantine-color-dark-3)"
-                                                                  style={{
-                                                                      transform : isExp ? 'rotate(90deg)' : 'none',
-                                                                      transition: 'transform 0.2s'
-                                                                  }}/>
+                                            {guest && (
+                                                <IconChevronRight
+                                                    size={12}
+                                                    color="var(--mantine-color-dark-3)"
+                                                    style={{
+                                                        transform : isExp ? 'rotate(90deg)' : 'none',
+                                                        transition: 'transform 0.2s',
+                                                    }}
+                                                />
                                             )}
                                         </Table.Td>
                                         <Table.Td ff="monospace" c="dimmed">{ip}</Table.Td>
-                                        <Table.Td fw={machine ? 500 : 400} c={machine ? undefined : 'dark.5'}
-                                                  ff="monospace">
-                                            {machine?.name ?? 'unallocated'}
+                                        <Table.Td fw={guest ? 500 : 400} c={guest ? undefined : 'dark.5'} ff="monospace">
+                                            {guest?.name ?? 'unallocated'}
                                         </Table.Td>
-                                        <Table.Td>{machine && <PowerBadge state={machine.power}/>}</Table.Td>
-                                        <Table.Td ff="monospace">{machine?.cpus}</Table.Td>
-                                        <Table.Td ff="monospace">{machine ? `${machine.ram}G` : ''}</Table.Td>
-                                        <Table.Td c="dimmed">{machine?.group}</Table.Td>
-                                        <Table.Td ff="monospace" c="dimmed">{machine?.owner}</Table.Td>
+                                        <Table.Td>{guest && <PowerBadge state={guest.power}/>}</Table.Td>
+                                        <Table.Td ff="monospace">{guest?.cpu}</Table.Td>
+                                        <Table.Td ff="monospace">{guest ? `${guest.ram}G` : ''}</Table.Td>
+                                        <Table.Td c="dimmed">{guest?.group}</Table.Td>
+                                        <Table.Td ff="monospace" c="dimmed">{guest?.owner}</Table.Td>
                                     </Table.Tr>
 
-                                    {machine && (
-                                        <Table.Tr key={`${ip}-exp`} style={{background: 'var(--mantine-color-dark-8)'}}>
+                                    {guest && (
+                                        <Table.Tr key={`${ip}-detail`} style={{background: 'var(--mantine-color-dark-8)'}}>
                                             <Table.Td colSpan={8} p={0}>
                                                 <Collapse in={isExp}>
-                                                    <SimpleGrid cols={6} px="xl" py="sm">
-                                                        {[
-                                                            ['Folder', machine.folder],
-                                                            ['Group', machine.group],
-                                                            ['Sub-Group', machine.subgroup],
-                                                            ['Owner', machine.owner],
-                                                            ['Created', fmtDate(machine.created)],
-                                                            ['Uptime', machine.power === 'on' ? fmtUptime(machine.uptime) + ' ago' : '—'],
-                                                        ].map(([l, v]) => (
-                                                            <Stack key={l} gap={2}>
-                                                                <Text size="xs" tt="uppercase" c="dimmed"
-                                                                      style={{letterSpacing: '0.08em'}}>{l}</Text>
-                                                                <Text size="xs">{v}</Text>
-                                                            </Stack>
-                                                        ))}
-                                                    </SimpleGrid>
+                                                    <Box px="xl" py="sm">
+                                                        <MachineDetail machine={guest}/>
+                                                    </Box>
                                                 </Collapse>
                                             </Table.Td>
                                         </Table.Tr>
@@ -156,9 +405,11 @@ export function NetworkTable({rows, isCore, isLoading}: Props) {
                                 </>
                             );
                         })}
+
                     </Table.Tbody>
                 </Table>
-                {filtered.length === 0 && (
+
+                {totalVisible === 0 && (
                     <Text ta="center" c="dimmed" py="xl">No results match your filters</Text>
                 )}
             </Box>

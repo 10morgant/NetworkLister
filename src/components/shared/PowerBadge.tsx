@@ -1,10 +1,16 @@
 import {Badge}           from '@mantine/core';
 import type {PowerState} from '@/types';
 
-const CFG: Record<PowerState, { label: string; color: string }> = {
-    on       : {label: 'ON', color: 'teal'},
-    off      : {label: 'OFF', color: 'red'},
-    suspended: {label: 'SUSPENDED', color: 'yellow'},
+export interface PowerStateMapping {
+    name: string
+    label: string;
+    color: string
+}
+
+export const CFG: Record<PowerState, PowerStateMapping> = {
+    on       : {name: 'on',        label: 'ON',        color: 'teal'},
+    off      : {name: 'off',       label: 'OFF',       color: 'red'},
+    suspended: {name: 'suspended', label: 'SUSPENDED', color: 'yellow'},
 };
 
 export function PowerBadge({state}: { state: PowerState }) {

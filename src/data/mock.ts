@@ -42,7 +42,7 @@ export const MACHINES: Machine[] = [
         vcenterUrl : 'https://vcenter.example.com/vm/app-prod-01'
     },
     {
-        ip         : '10.0.0.5',
+        ip         : '10.0.0.1',
         name       : 'app-prod-01',
         power      : 'on',
         folder     : 'App Tier',
