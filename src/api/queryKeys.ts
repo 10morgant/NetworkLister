@@ -12,4 +12,9 @@ export const queryKeys = {
     guestsTree          : ['guests', 'tree'] as const,
     guestsByGroup       : (group: string) => ['guests', 'group', group] as const,
     guestsBySubGroup    : (group: string, subGroup: string) => ['guests', 'group', group, 'sub_group', subGroup] as const,
+    statsOverview       : ['stats', 'overview'] as const,
+    statsResources      : ['stats', 'resources'] as const,
+    statsOwner          : ['stats', 'owner'] as const,
+    statsAge            : ['stats', 'age'] as const,
+    statsNetworks       : ['stats', 'networks'] as const,
 };
