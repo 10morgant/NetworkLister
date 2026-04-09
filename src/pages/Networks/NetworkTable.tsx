@@ -28,6 +28,8 @@ import {
     CFG,
     PowerBadge
 } from '@/components/shared/PowerBadge';
+import {CPUBadge} from '@/components/shared/CPUBadge';
+import {RAMBadge} from '@/components/shared/RAMBadge';
 import type {
     IPGuest,
     IPGuests,
@@ -90,7 +92,7 @@ function ClashBanner({clashes, onJumpTo}: ClashBannerProps) {
                 />
             </Group>
 
-            <Collapse in={open}>
+            <Collapse expanded={open}>
                 <ScrollArea mah={180} px="md" pb="sm">
                     <Stack gap={4}>
                         {clashes.map(({ip, guests}) => (
@@ -186,7 +188,7 @@ function ClashRow({ip, guests, expanded, onToggle}: ClashRowProps) {
 
             <Table.Tr style={{background: 'var(--mantine-color-dark-8)'}}>
                 <Table.Td colSpan={8} p={0}>
-                    <Collapse in={expanded}>
+                    <Collapse expanded={expanded}>
                         <Stack gap={0} px="xl" py="sm">
                             {guests.map((m, idx) => (
                                 <Box
@@ -220,8 +222,8 @@ function MachineDetail({machine: m}: { machine: Machine }) {
                 ['Group',     m.group],
                 ['Sub-Group', m.sub_group],
                 ['Owner',     m.owner],
-                ['Created',   fmtDate(m.created)],
-                ['Uptime',    m.power === 'on' ? fmtUptime(m.power_on_time) + ' ago' : '—'],
+                ['Created',   fmtDate(m.created ?? null)],
+                ['Uptime',    m.power === 'on' ? fmtUptime(m.power_on_time ?? null) + ' ago' : '—'],
             ] as [string, string][]).map(([l, v]) => (
                 <Stack key={l} gap={2}>
                     <Text size="xs" tt="uppercase" c="dimmed" style={{letterSpacing: '0.08em'}}>{l}</Text>
@@ -424,8 +426,8 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
                                             {guest?.name ?? 'unallocated'}
                                         </Table.Td>
                                         <Table.Td>{guest && <PowerBadge state={guest.power}/>}</Table.Td>
-                                        <Table.Td ff="monospace">{guest?.cpu}</Table.Td>
-                                        <Table.Td ff="monospace">{guest ? `${guest.ram}G` : ''}</Table.Td>
+                                        <Table.Td>{guest && <CPUBadge cores={guest.cpu}/>}</Table.Td>
+                                        <Table.Td>{guest && <RAMBadge ramGiB={guest.ram}/>}</Table.Td>
                                         <Table.Td c="dimmed">{guest?.group}</Table.Td>
                                         <Table.Td ff="monospace" c="dimmed">{guest?.owner}</Table.Td>
                                     </Table.Tr>
@@ -433,7 +435,7 @@ export function NetworkTable({rows, clashes, isCore, isLoading}: Props) {
                                     {guest && (
                                         <Table.Tr key={`${ip}-detail`} style={{background: 'var(--mantine-color-dark-8)'}}>
                                             <Table.Td colSpan={8} p={0}>
-                                                <Collapse in={isExp}>
+                                                <Collapse expanded={isExp}>
                                                     <Box px="xl" py="sm">
                                                         <MachineDetail machine={guest}/>
                                                     </Box>

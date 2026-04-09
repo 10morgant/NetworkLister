@@ -25,7 +25,9 @@ import {
     IconTable,
     IconX,
 } from '@tabler/icons-react';
+import {CPUBadge} from '@/components/shared/CPUBadge';
 import {PowerBadge} from '@/components/shared/PowerBadge';
+import {RAMBadge} from '@/components/shared/RAMBadge';
 import {StatCard} from '@/components/shared/StatCard';
 import {fmtDate, fmtUptime} from '@/pages/Networks/utils';
 import {
@@ -99,13 +101,15 @@ function SelectionHeader({sel, guests, isLoading}: SelectionHeaderProps) {
                     }
                 </Stack>
                 {isLoading
-                    ? <Group gap="xs">{Array.from({length: 3}).map((_, i) => <Skeleton key={i} height={52} width={120}
+                    ? <Group gap="xs">{Array.from({length: 4}).map((_, i) => <Skeleton key={i} height={52} width={120}
                                                                                        radius="sm"/>)}</Group>
                     : <Group gap="xs">
-                        <StatCard label="Total" value={guests.length}/>
-                        <StatCard label="Online" value={guests.filter(m => m.power === 'on').length}
+                        <StatCard label="Total" value={guests.length} minWidth={200}/>
+                        <StatCard label="Online" value={guests.filter(m => m.power === 'on').length} minWidth={200}
                                   color="var(--mantine-color-teal-5)"/>
-                        <StatCard label="Offline" value={guests.filter(m => m.power === 'off').length}
+                        <StatCard label="Suspended" value={guests.filter(m => m.power === 'suspended').length} minWidth={200}
+                                  color="var(--mantine-color-yellow-8)"/>
+                        <StatCard label="Offline" value={guests.filter(m => m.power === 'off').length} minWidth={200}
                                   color="var(--mantine-color-red-5)"/>
                     </Group>
                 }
@@ -174,18 +178,18 @@ function FolderToolbar({
                             {
                                 value: 'grouped',
                                 label: (
-                                    <Center style={{ gap: 10 }}>
-                                    <IconLayoutList size={14} aria-label="Grouped view"/>
-                                    <span>Grouped</span>
-                                </Center>),
+                                    <Center style={{gap: 10}}>
+                                        <IconLayoutList size={14} aria-label="Grouped view"/>
+                                        <span>Grouped</span>
+                                    </Center>),
                             },
                             {
                                 value: 'table',
                                 label: (
-                                    <Center style={{ gap: 10 }}>
-                                    <IconTable size={14} aria-label="Table view"/>
-                                    <span>Table</span>
-                                </Center>),
+                                    <Center style={{gap: 10}}>
+                                        <IconTable size={14} aria-label="Table view"/>
+                                        <span>Table</span>
+                                    </Center>),
                             },
                         ]}
                     />
@@ -259,7 +263,6 @@ interface GuestRowProps {
 }
 
 function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) {
-    const networkNames = m.networks.map(n => n.name).join(', ') || '—';
     return (
         <>
             <Table.Tr onClick={() => onToggle(m.id)} style={{cursor: 'pointer'}}>
@@ -270,15 +273,16 @@ function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) 
                                           transition: 'transform 0.2s'
                                       }}/>
                 </Table.Td>
-                <Table.Td fw={500} ff="monospace">{m.name}</Table.Td>
+                <Table.Td fw={300} ff="monospace">{m.name}</Table.Td>
+                <Table.Td ><PowerBadge state={m.power}/></Table.Td>
+                <Table.Td ff="monospace" c="dimmed">{m.folder ?? '—'}</Table.Td>
+                <Table.Td ><CPUBadge cores={m.cpu}/></Table.Td>
+                <Table.Td maw={50}><RAMBadge ramGiB={m.ram}/></Table.Td>
                 <Table.Td ff="monospace" c="dimmed">{m.ip ?? '—'}</Table.Td>
-                <Table.Td><PowerBadge state={m.power}/></Table.Td>
-                <Table.Td ff="monospace">{m.cpu}</Table.Td>
-                <Table.Td ff="monospace">{m.ram}G</Table.Td>
-                <Table.Td c="dimmed"
+                {/*<Table.Td c="dimmed"
                           style={{maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                     {networkNames}
-                </Table.Td>
+                </Table.Td>*/}
                 <Table.Td ff="monospace" c="dimmed">{m.owner ?? '—'}</Table.Td>
             </Table.Tr>
             <Table.Tr style={{background: 'var(--mantine-color-dark-8)'}}>
@@ -290,8 +294,11 @@ function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) 
                                 ['Group', m.group],
                                 ['Sub-Group', m.sub_group],
                                 ['Owner', m.owner],
+                                ['IPs', m.ip],
                                 ['Created', fmtDate(m.created ?? null)],
                                 ['Uptime', m.power === 'on' ? fmtUptime(m.power_on_time ?? null) + ' ago' : '—'],
+                                ['Power', m.power],
+                                ['ID', m.id],
                             ] as [string, string | undefined][]).map(([l, v]) => (
                                 <Stack key={l} gap={2}>
                                     <Text size="xs" tt="uppercase" c="dimmed"
@@ -343,9 +350,14 @@ function GuestTableHead() {
     return (
         <Table.Thead>
             <Table.Tr>
-                <Table.Th w={24}/><Table.Th>Guest</Table.Th><Table.Th>IP</Table.Th>
-                <Table.Th>Power</Table.Th><Table.Th>CPUs</Table.Th><Table.Th>RAM</Table.Th>
-                <Table.Th>Network</Table.Th><Table.Th>Owner</Table.Th>
+                <Table.Th w={24}/>
+                <Table.Th w={300}>Guest</Table.Th>
+                <Table.Th w={70}>Power</Table.Th>
+                <Table.Th w={200}>Folder</Table.Th>
+                <Table.Th w={70}>CPUs</Table.Th>
+                <Table.Th w={70}>RAM</Table.Th>
+                <Table.Th w={100}>IPs</Table.Th>
+                <Table.Th w={100}>Owner</Table.Th>
             </Table.Tr>
         </Table.Thead>
     );
@@ -491,7 +503,7 @@ function AllGuestsView({guests, expanded, onToggle, mode}: AllGuestsViewProps) {
 
     if (mode === 'table') {
         return (
-            <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
+            <Table  highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                 <GuestTableHead/>
                 <Table.Tbody>
                     {guests.map((guest) => (
@@ -620,7 +632,7 @@ export default function FoldersPage() {
     const [sel, setSel] = useState<FolderSelection>({group: null, subGroup: null});
     const [search, setSearch] = useState('');
     const [powerF, setPowerF] = useState('all');
-    const [allGuestsViewMode, setAllGuestsViewMode] = useState<AllGuestsViewMode>('grouped');
+    const [allGuestsViewMode, setAllGuestsViewMode] = useState<AllGuestsViewMode>('table');
     const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(INITIAL_ADVANCED_FILTERS);
     const [expanded, setExp] = useState<Set<string>>(new Set());
 
