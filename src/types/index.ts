@@ -112,7 +112,11 @@ export interface Buckets {
     "30–90d": number
     "90–180d": number
     "180d–1y": number
-    ">1y": number
+    "1y+": number
+    "2y+": number
+    "3y+": number
+    "4y+": number
+    "5y+": number
     unknown: number
 }
 

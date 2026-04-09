@@ -137,7 +137,7 @@ function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) 
             </Table.Tr>
             <Table.Tr style={{background: 'var(--mantine-color-dark-8)'}}>
                 <Table.Td colSpan={colSpan} p={0}>
-                    <Collapse in={isExpanded}>
+                    <Collapse expanded={isExpanded}>
                         <SimpleGrid cols={6} px="xl" py="sm">
                             {([
                                 ['Folder',    m.folder],
@@ -410,7 +410,7 @@ function AllGuestsView({guests, expanded, onToggle}: AllGuestsViewProps) {
                                             <SubGroupStats guests={sg}/>
                                         </Group>
 
-                                        <Collapse in={isOpen}>
+                                        <Collapse expanded={isOpen}>
                                             <Table highlightOnHover verticalSpacing="xs" fz="xs">
                                                 <GuestTableHead/>
                                                 <Table.Tbody>
