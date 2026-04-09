@@ -2,9 +2,10 @@ import {
     Network,
     NetworksResponse
 } from '@/types';
+import {API_BASE} from '@/api/base';
 
 export async function fetchNetworks(): Promise<NetworksResponse> {
-    const res = await fetch(`http://localhost:8000/networks`);
+    const res = await fetch(`${API_BASE}/networks`);
     if (!res.ok) throw new Error("Network error");
     return res.json();
 }
@@ -13,7 +14,7 @@ export async function createNetwork(
     payload: Omit<Network, 'id'>,
     _credentials: { username: string; password: string },
 ): Promise<Network> {
-    // await fetch('/api/networks', {
+    // await fetch(`${API_BASE}/networks`, {
     //   method: 'POST',
     //   headers: {
     //     'Content-Type': 'application/json',
@@ -21,16 +22,5 @@ export async function createNetwork(
     //   },
     //   body: JSON.stringify(payload),
     // });
-    return {...payload, id: `u-${Date.now()}`};
-}
-
-export async function updateNetwork(id: string, patch: Partial<Network>): Promise<Network> {
-    // await fetch(`/api/networks/${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
-    const existing = NETWORKS.find(n => n.id === id)!;
-    return {...existing, ...patch};
-}
-
-export async function deleteNetwork(id: string): Promise<void> {
-    // await fetch(`/api/networks/${id}`, { method: 'DELETE' });
-    console.log('DELETE network', id);
+    return {...payload, id: Date.now()};
 }
