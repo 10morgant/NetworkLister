@@ -20,7 +20,9 @@ import {
 import {
     IconAlertCircle,
     IconChevronRight,
+    IconLayoutList,
     IconSearch,
+    IconTable,
     IconX,
 } from '@tabler/icons-react';
 import {PowerBadge} from '@/components/shared/PowerBadge';
@@ -40,6 +42,8 @@ import {
 import {AGE_FILTER_OPTIONS, AgeFilterValue, getGuestAgeBucket} from "@/types/ageBuckets";
 
 const UNOWNED_OWNER_VALUE = '__unowned__';
+
+type AllGuestsViewMode = 'grouped' | 'table';
 
 
 interface AdvancedFilters {
@@ -118,6 +122,9 @@ interface FolderToolbarProps {
     powerF: string;
     onPowerF: (v: string) => void;
     count: number;
+    isAll: boolean;
+    allGuestsViewMode: AllGuestsViewMode;
+    onAllGuestsViewModeChange: (value: AllGuestsViewMode) => void;
     advancedFilters: AdvancedFilters;
     onAdvancedChange: (key: keyof AdvancedFilters, value: string[]) => void;
     cpuOptions: { value: string; label: string }[];
@@ -133,6 +140,9 @@ function FolderToolbar({
                            powerF,
                            onPowerF,
                            count,
+                           isAll,
+                           allGuestsViewMode,
+                           onAllGuestsViewModeChange,
                            advancedFilters,
                            onAdvancedChange,
                            cpuOptions,
@@ -155,6 +165,31 @@ function FolderToolbar({
                 />
                 <SegmentedControl size="xs" data={['all', 'on', 'off', 'suspended']} value={powerF}
                                   onChange={onPowerF}/>
+                {isAll && (
+                    <SegmentedControl
+                        size="xs"
+                        value={allGuestsViewMode}
+                        onChange={(value) => onAllGuestsViewModeChange(value as AllGuestsViewMode)}
+                        data={[
+                            {
+                                value: 'grouped',
+                                label: (
+                                    <Center style={{ gap: 10 }}>
+                                    <IconLayoutList size={14} aria-label="Grouped view"/>
+                                    <span>Grouped</span>
+                                </Center>),
+                            },
+                            {
+                                value: 'table',
+                                label: (
+                                    <Center style={{ gap: 10 }}>
+                                    <IconTable size={14} aria-label="Table view"/>
+                                    <span>Table</span>
+                                </Center>),
+                            },
+                        ]}
+                    />
+                )}
             </Group>
             <Group align={"end"}>
                 <MultiSelect
@@ -209,7 +244,7 @@ function FolderToolbar({
                     Clear filters{activeAdvancedCount > 0 ? ` (${activeAdvancedCount})` : ''}
                 </Button>
             </Group>
-            <Text size="xs" c="dimmed"  ff="monospace">{count} guests</Text>
+            <Text size="xs" c="dimmed" ff="monospace">{count} guests</Text>
         </Stack>
     );
 }
@@ -392,9 +427,10 @@ interface AllGuestsViewProps {
     guests: Guest[];
     expanded: Set<string>;
     onToggle: (id: string) => void;
+    mode: AllGuestsViewMode;
 }
 
-function AllGuestsView({guests, expanded, onToggle}: AllGuestsViewProps) {
+function AllGuestsView({guests, expanded, onToggle, mode}: AllGuestsViewProps) {
     const grouped = useMemo(() => {
         const map = new Map<string, Map<string, Guest[]>>();
         guests.forEach(g => {
@@ -449,8 +485,26 @@ function AllGuestsView({guests, expanded, onToggle}: AllGuestsViewProps) {
             return n;
         });
 
-    if (grouped.length === 0) {
+    if (guests.length === 0) {
         return <Text ta="center" c="dimmed" py="xl">No guests found</Text>;
+    }
+
+    if (mode === 'table') {
+        return (
+            <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
+                <GuestTableHead/>
+                <Table.Tbody>
+                    {guests.map((guest) => (
+                        <GuestRow
+                            key={guest.id}
+                            guest={guest}
+                            isExpanded={expanded.has(guest.id)}
+                            onToggle={onToggle}
+                        />
+                    ))}
+                </Table.Tbody>
+            </Table>
+        );
     }
 
     return (
@@ -566,6 +620,7 @@ export default function FoldersPage() {
     const [sel, setSel] = useState<FolderSelection>({group: null, subGroup: null});
     const [search, setSearch] = useState('');
     const [powerF, setPowerF] = useState('all');
+    const [allGuestsViewMode, setAllGuestsViewMode] = useState<AllGuestsViewMode>('grouped');
     const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(INITIAL_ADVANCED_FILTERS);
     const [expanded, setExp] = useState<Set<string>>(new Set());
 
@@ -669,6 +724,7 @@ export default function FoldersPage() {
         setExp(new Set());
         setSearch('');
         setPowerF('all');
+        setAllGuestsViewMode('grouped');
         resetAdvancedFilters();
     };
 
@@ -686,6 +742,9 @@ export default function FoldersPage() {
                     search={search} onSearch={setSearch}
                     powerF={powerF} onPowerF={setPowerF}
                     count={filtered.length}
+                    isAll={isAll}
+                    allGuestsViewMode={allGuestsViewMode}
+                    onAllGuestsViewModeChange={setAllGuestsViewMode}
                     advancedFilters={advancedFilters}
                     onAdvancedChange={setAdvancedFilter}
                     cpuOptions={cpuOptions}
@@ -707,7 +766,8 @@ export default function FoldersPage() {
                     {isLoading && <TableSkeleton/>}
 
                     {!isLoading && !isError && isAll && (
-                        <AllGuestsView guests={filtered} expanded={expanded} onToggle={toggleRow}/>
+                        <AllGuestsView guests={filtered} expanded={expanded} onToggle={toggleRow}
+                                       mode={allGuestsViewMode}/>
                     )}
 
                     {!isLoading && !isError && !isAll && (
