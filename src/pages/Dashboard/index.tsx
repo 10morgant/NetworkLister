@@ -8,12 +8,14 @@ import {
     Group,
     Loader,
     Paper,
-    Progress,
-    RingProgress,
     SimpleGrid,
     Stack,
     Text,
 }                       from '@mantine/core';
+import {
+    BarChart,
+    DonutChart,
+}                       from '@mantine/charts';
 import { useQuery }     from '@tanstack/react-query';
 import { StatCard }     from '@/components/shared/StatCard';
 import { fmtAge, machineAgeMs } from '@/utils/common';
@@ -25,6 +27,19 @@ import {
     fetchStatsAge,
     fetchStatsNetworks,
 }                       from '@/api/stats';
+
+const AGE_BUCKET_ORDER = ['<30d', '30–90d', '90–180d', '180d–1y', '>1y', 'unknown'] as const;
+
+function sortTierEntries([left]: [string, number], [right]: [string, number]) {
+    const leftNumeric = Number.parseFloat(left.replace(/[^\d.]+/g, ''));
+    const rightNumeric = Number.parseFloat(right.replace(/[^\d.]+/g, ''));
+
+    if (Number.isFinite(leftNumeric) && Number.isFinite(rightNumeric) && leftNumeric !== rightNumeric) {
+        return leftNumeric - rightNumeric;
+    }
+
+    return left.localeCompare(right, undefined, {numeric: true, sensitivity: 'base'});
+}
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -42,31 +57,6 @@ function Section({title, children}: { title: string; children: React.ReactNode }
     );
 }
 
-// ─── Bar row ──────────────────────────────────────────────────────────────────
-
-function BarRow({label, value, max, color = 'blue', right}: {
-    label: string;
-    value: number;
-    max: number;
-    color?: string;
-    right?: React.ReactNode;
-}) {
-    return (
-        <Group gap="sm" wrap="nowrap">
-            <Text
-                size="xs" c="dimmed"
-                style={{width: 130, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
-            >
-                {label}
-            </Text>
-            <Progress value={max > 0 ? (value / max) * 100 : 0} color={color} size="sm" style={{flex: 1}}/>
-            <Box style={{width: 44, textAlign: 'right', flexShrink: 0}}>
-                {right ?? <Text size="xs" ff="monospace" c="dimmed">{value}</Text>}
-            </Box>
-        </Group>
-    );
-}
-
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -80,6 +70,30 @@ export default function Dashboard() {
 
     const isLoading = l1 || l2 || l3 || l4 || l5;
 
+    // ── Fleet basics
+    const total      = overview?.total_guests     ?? 0;
+    const online     = overview?.guests_on        ?? 0;
+    const offline    = overview?.guests_off       ?? 0;
+    const suspended  = overview?.guests_suspended ?? 0;
+    const totalNets  = overview?.total_networks   ?? 0;
+    const ipClashes  = overview?.ip_clashes       ?? 0;
+    const onlinePct  = total > 0 ? Math.round(online / total * 100) : 0;
+
+    // ── Ownership
+    const distinctOwners = ownerData?.by_owner.length ?? 0;
+    const unowned        = ownerData?.unowned ?? 0;
+
+    // ── Resources
+    const totalCPU = resources?.total_cpus           ?? 0;
+    const totalRAM = resources?.total_ram_gib        ?? 0;
+    const avgCPU   = resources?.avg_cpus_per_guest   ?? 0;
+    const avgRAM   = resources?.avg_ram_gib_per_guest ?? 0;
+
+    // ── Age
+    const buckets      = ageData?.buckets ?? {} as Record<string, number>;
+    const newVMs30d    = buckets['<30d'] ?? 0;
+    const olderThan1y  = buckets['>1y'] ?? 0;
+
     // ── Memos (must precede any conditional return)
     const topOwners = useMemo(() =>
         [...(ownerData?.by_owner ?? [])].sort((a, b) => b.total - a.total).slice(0, 6),
@@ -88,6 +102,56 @@ export default function Dashboard() {
     const sortedNetworks = useMemo(() =>
         [...(netsData?.networks ?? [])].sort((a, b) => b.allocated - a.allocated),
     [netsData]);
+
+    const fleetHealthChartData = useMemo(() => {
+        if (total === 0) {
+            return [{name: 'No guests', value: 1, color: 'gray.7'}];
+        }
+
+        return [
+            {name: 'Online', value: online, color: 'teal.6'},
+            {name: 'Offline', value: offline, color: 'red.6'},
+            {name: 'Suspended', value: suspended, color: 'yellow.6'},
+        ].filter((entry) => entry.value > 0);
+    }, [offline, online, suspended, total]);
+
+    const ramChartData = useMemo(() =>
+        Object.entries(resources?.ram_distribution ?? {})
+            .sort(sortTierEntries)
+            .map(([tier, count]) => ({tier, count}))
+            .filter((entry) => entry.count > 0),
+    [resources]);
+
+    const cpuChartData = useMemo(() =>
+        Object.entries(resources?.cpu_distribution ?? {})
+            .sort(sortTierEntries)
+            .map(([tier, count]) => ({tier: `${tier} vCPUs`, count}))
+            .filter((entry) => entry.count > 0),
+    [resources]);
+
+    const ageChartData = useMemo(() =>
+        AGE_BUCKET_ORDER
+            .map((bucket) => ({bucket, count: buckets[bucket] ?? 0}))
+            .filter((entry) => entry.count > 0),
+    [buckets]);
+
+    const ownerChartData = useMemo(() =>
+        topOwners.map((owner) => ({
+            owner: owner.owner,
+            on: owner.on,
+            off: owner.off,
+            suspended: owner.suspended,
+        })),
+    [topOwners]);
+
+    const networkChartData = useMemo(() =>
+        sortedNetworks.slice(0, 6).map((network) => ({
+            network: network.network_name,
+            on: network.on,
+            off: network.off,
+            suspended: network.suspended,
+        })),
+    [sortedNetworks]);
 
     // ── Loading state
     if (isLoading) {
@@ -98,38 +162,7 @@ export default function Dashboard() {
         );
     }
 
-    // ── Fleet basics
-    const total     = overview?.total_guests    ?? 0;
-    const online    = overview?.guests_on       ?? 0;
-    const offline   = overview?.guests_off      ?? 0;
-    const suspended = overview?.guests_suspended ?? 0;
-    const totalNets = overview?.total_networks  ?? 0;
-    const ipClashes = overview?.ip_clashes      ?? 0;
-    const onlinePct = total > 0 ? Math.round(online / total * 100) : 0;
-
-    // ── Ownership
-    const distinctOwners = ownerData?.by_owner.length ?? 0;
-    const unowned        = ownerData?.unowned ?? 0;
-
-    // ── Resources
-    const totalCPU = resources?.total_cpus            ?? 0;
-    const totalRAM = resources?.total_ram_gib          ?? 0;
-    const avgCPU   = resources?.avg_cpus_per_guest     ?? 0;
-    const avgRAM   = resources?.avg_ram_gib_per_guest  ?? 0;
-    const ramDist  = Object.entries(resources?.ram_distribution ?? {});
-    const cpuDist  = Object.entries(resources?.cpu_distribution ?? {});
-    const maxRam   = Math.max(...ramDist.map(([, v]) => v), 1);
-    const maxCpu   = Math.max(...cpuDist.map(([, v]) => v), 1);
-
-    // ── Age
-    const buckets    = ageData?.buckets ?? {} as Record<string, number>;
-    const bucketList = Object.entries(buckets);
-    const maxBucket  = Math.max(...bucketList.map(([, v]) => v), 1);
-    const newVMs30d  = buckets['<30d']  ?? 0;
-    const olderThan1y = buckets['>1y']  ?? 0;
-
     // ── Networks
-    const topNetworks   = sortedNetworks.slice(0, 6);
     const emptyNetworks = sortedNetworks.filter(n => n.allocated === 0).length;
     const avgVMsPerNet  = totalNets > 0 ? +(total / totalNets).toFixed(1) : 0;
 
@@ -150,24 +183,15 @@ export default function Dashboard() {
                     <Paper p="md" radius="sm" style={{background: 'var(--surface-1)'}}>
                         <Group gap="xl" align="center" wrap="nowrap">
 
-                            {/* Ring chart */}
-                            <Box style={{flexShrink: 0}}>
+                            <Box style={{flexShrink: 0, minWidth: 280}}>
                                 <Group gap="lg" wrap="nowrap">
-                                    <RingProgress
-                                        size={110} thickness={10} roundCaps
-                                        sections={[
-                                            {value: total > 0 ? online    / total * 100 : 0, color: 'teal'},
-                                            {value: total > 0 ? offline   / total * 100 : 0, color: 'red'},
-                                            {value: total > 0 ? suspended / total * 100 : 0, color: 'yellow'},
-                                        ]}
-                                        label={
-                                            <Center>
-                                                <Stack gap={0} align="center">
-                                                    <Text fw={800} size="lg" ff="monospace" lh={1}>{onlinePct}%</Text>
-                                                    <Text size="xs" c="dimmed">online</Text>
-                                                </Stack>
-                                            </Center>
-                                        }
+                                    <DonutChart
+                                        size={160}
+                                        thickness={22}
+                                        chartLabel={`${onlinePct}%`}
+                                        data={fleetHealthChartData}
+                                        tooltipDataSource="segment"
+                                        valueFormatter={(value) => `${value} guest${value === 1 ? '' : 's'}`}
                                     />
                                     <Stack gap="xs" justify="center">
                                         {[
@@ -216,29 +240,49 @@ export default function Dashboard() {
                         <Paper p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                             <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                                   style={{letterSpacing: '0.1em'}}>RAM Distribution</Text>
-                            <Stack gap="xs">
-                                {ramDist.map(([tier, count]) => (
-                                    <BarRow key={tier} label={tier} value={count} max={maxRam} color="indigo"
-                                            right={<Text size="xs" ff="monospace" c="dimmed">{count}</Text>}/>
-                                ))}
-                            </Stack>
+                            {ramChartData.length > 0 ? (
+                                <BarChart
+                                    h={240}
+                                    data={ramChartData}
+                                    dataKey="tier"
+                                    series={[{name: 'count', label: 'VMs', color: 'indigo.6'}]}
+                                    orientation="vertical"
+                                    withBarValueLabel
+                                    gridAxis="none"
+                                    xAxisProps={{allowDecimals: false}}
+                                    yAxisProps={{width: 96}}
+                                    valueFormatter={(value) => `${value}`}
+                                />
+                            ) : (
+                                <Text size="sm" c="dimmed">No RAM distribution data available.</Text>
+                            )}
                         </Paper>
                         <Paper p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                             <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                                   style={{letterSpacing: '0.1em'}}>CPU Distribution</Text>
-                            <Stack gap="xs">
-                                {cpuDist.map(([tier, count]) => (
-                                    <BarRow key={tier} label={`${tier} vCPUs`} value={count} max={maxCpu} color="blue"
-                                            right={<Text size="xs" ff="monospace" c="dimmed">{count}</Text>}/>
-                                ))}
-                            </Stack>
+                            {cpuChartData.length > 0 ? (
+                                <BarChart
+                                    h={240}
+                                    data={cpuChartData}
+                                    dataKey="tier"
+                                    series={[{name: 'count', label: 'VMs', color: 'blue.6'}]}
+                                    orientation="vertical"
+                                    withBarValueLabel
+                                    tickLine="none"
+                                    gridAxis="none"
+                                    xAxisProps={{allowDecimals: false}}
+                                    yAxisProps={{width: 96}}
+                                    valueFormatter={(value) => `${value}`}
+                                />
+                            ) : (
+                                <Text size="sm" c="dimmed">No CPU distribution data available.</Text>
+                            )}
                         </Paper>
                     </SimpleGrid>
                 </Section>
 
                 <Divider style={{borderColor: 'var(--border)'}}/>
 
-                {/* ── Age & hygiene ─────────────────────────────────────────────── */}
                 <Section title="Age & Hygiene">
                     <Flex gap="xs" wrap="wrap" align="stretch" mb="sm">
                         <StatCard label="New (30d)"  value={newVMs30d}   color="var(--mantine-color-teal-5)"/>
@@ -259,12 +303,23 @@ export default function Dashboard() {
                     <Paper p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                         <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                               style={{letterSpacing: '0.1em'}}>Age Breakdown</Text>
-                        <Stack gap="xs">
-                            {bucketList.map(([bucket, count]) => (
-                                <BarRow key={bucket} label={bucket} value={count} max={maxBucket} color="orange"
-                                        right={<Text size="xs" ff="monospace" c="dimmed">{count}</Text>}/>
-                            ))}
-                        </Stack>
+                        {ageChartData.length > 0 ? (
+                            <BarChart
+                                h={260}
+                                data={ageChartData}
+                                dataKey="bucket"
+                                series={[{name: 'count', label: 'VMs', color: 'orange.6'}]}
+                                orientation="vertical"
+                                withBarValueLabel
+                                tickLine="none"
+                                gridAxis="none"
+                                xAxisProps={{allowDecimals: false}}
+                                yAxisProps={{width: 96}}
+                                valueFormatter={(value) => `${value}`}
+                            />
+                        ) : (
+                            <Text size="sm" c="dimmed">No age breakdown data available.</Text>
+                        )}
                     </Paper>
                 </Section>
 
@@ -280,12 +335,28 @@ export default function Dashboard() {
                     <Paper p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                         <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                               style={{letterSpacing: '0.1em'}}>Top Owners</Text>
-                        <Stack gap="xs">
-                            {topOwners.map(o => (
-                                <BarRow key={o.owner} label={o.owner} value={o.total}
-                                        max={topOwners[0]?.total ?? 1} color="violet"/>
-                            ))}
-                        </Stack>
+                        {ownerChartData.length > 0 ? (
+                            <BarChart
+                                h={300}
+                                data={ownerChartData}
+                                dataKey="owner"
+                                type="stacked"
+                                orientation="vertical"
+                                withLegend
+                                tickLine="none"
+                                gridAxis="x"
+                                xAxisProps={{allowDecimals: false}}
+                                yAxisProps={{width: 120}}
+                                valueFormatter={(value) => `${value} guest${value === 1 ? '' : 's'}`}
+                                series={[
+                                    {name: 'on', label: 'Online', color: 'teal.6'},
+                                    {name: 'off', label: 'Offline', color: 'red.6'},
+                                    {name: 'suspended', label: 'Suspended', color: 'yellow.6'},
+                                ]}
+                            />
+                        ) : (
+                            <Text size="sm" c="dimmed">No ownership data available.</Text>
+                        )}
                     </Paper>
                 </Section>
 
@@ -304,22 +375,28 @@ export default function Dashboard() {
                     <Paper p="md" radius="sm" style={{background: 'var(--surface-2)'}}>
                         <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm"
                               style={{letterSpacing: '0.1em'}}>Top Networks by VM Count</Text>
-                        <Stack gap="xs">
-                            {topNetworks.map(n => (
-                                <BarRow
-                                    key={n.network_id}
-                                    label={n.network_name}
-                                    value={n.allocated}
-                                    max={topNetworks[0]?.allocated ?? 1}
-                                    color={n.type === 'core' ? 'blue' : 'cyan'}
-                                    right={
-                                        <Group gap={4} justify="flex-end" wrap="nowrap">
-                                            <Text size="xs" ff="monospace" c="dimmed">{n.allocated}</Text>
-                                        </Group>
-                                    }
-                                />
-                            ))}
-                        </Stack>
+                        {networkChartData.length > 0 ? (
+                            <BarChart
+                                h={320}
+                                data={networkChartData}
+                                dataKey="network"
+                                type="stacked"
+                                orientation="vertical"
+                                withLegend
+                                tickLine="none"
+                                gridAxis="x"
+                                xAxisProps={{allowDecimals: false}}
+                                yAxisProps={{width: 120}}
+                                valueFormatter={(value) => `${value} guest${value === 1 ? '' : 's'}`}
+                                series={[
+                                    {name: 'on', label: 'Online', color: 'teal.6'},
+                                    {name: 'off', label: 'Offline', color: 'red.6'},
+                                    {name: 'suspended', label: 'Suspended', color: 'yellow.6'},
+                                ]}
+                            />
+                        ) : (
+                            <Text size="sm" c="dimmed">No network allocation data available.</Text>
+                        )}
                     </Paper>
                 </Section>
 

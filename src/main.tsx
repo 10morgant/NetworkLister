@@ -12,6 +12,7 @@ import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 import {RouterProvider}     from '@tanstack/react-router';
 import {router}             from '@/router';
 import '@mantine/core/styles.css';
+import '@mantine/charts/styles.css';
 import {StarredProvider}    from './context/starred';
 
 const CSS_VARS = `
