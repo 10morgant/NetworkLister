@@ -28,8 +28,8 @@ import {
     fetchStatsNetworks,
 } from '@/api/stats';
 import {useNavigate} from "@tanstack/react-router";
+import {AGE_BUCKET_ORDER} from "@/types/ageBuckets";
 
-const AGE_BUCKET_ORDER = ['<1y', "1y+", "2y+", "3y+", "4y+", "5y+", 'unknown'] as const;
 
 function sortTierEntries([left]: [string, number], [right]: [string, number]) {
     const leftNumeric = Number.parseFloat(left.replace(/[^\d.]+/g, ''));
@@ -133,8 +133,10 @@ export default function Dashboard() {
                 .filter((entry) => entry.count > 0),
         [resources]);
 
+
     const ageChartData = useMemo(() =>
             AGE_BUCKET_ORDER
+                // @ts-ignore
                 .map((bucket) => ({bucket, count: buckets[bucket] ?? 0}))
         // .filter((entry) => entry.count > 0),
         ,

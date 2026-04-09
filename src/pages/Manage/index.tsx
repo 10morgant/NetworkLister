@@ -38,6 +38,9 @@ import {
     IconX,
 }                            from '@tabler/icons-react';
 import type {Network}        from '@/types';
+import {useQuery} from "@tanstack/react-query";
+import {queryKeys} from "@/api/queryKeys";
+import {fetchNetworks} from "@/api/networks";
 
 const INITIAL = []
 
@@ -239,7 +242,16 @@ function CreateNetworkModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ManagePage() {
-    const [nets, setNets]                 = useState<Network[]>(INITIAL);
+    const {
+        data     : networks,
+        isLoading: networksLoading,
+        isError  : networksError,
+    } = useQuery({
+        queryKey: queryKeys.networks,
+        queryFn : fetchNetworks,
+    });
+
+    const [nets, setNets]                 = useState<Network[]>(networks?.networks ?? INITIAL);
     const [search, setSearch]             = useState('');
     const [typeF, setTypeF]               = useState('all');
     const [editing, setEditing]           = useState<string | null>(null);

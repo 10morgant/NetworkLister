@@ -87,7 +87,7 @@ function GroupItem({group, selected, isOpen, onGroupClick, onSubGroupClick}: Gro
                 </Group>
             </UnstyledButton>
 
-            <Collapse in={isOpen}>
+            <Collapse expanded={isOpen}>
                 <Stack gap={0} pl="md" pt={2}>
                     {[...group.sub_groups].sort((a, b) => a.name.localeCompare(b.name)).map(sub => {
                         const isSel = selected.group === group.name && selected.subGroup === sub.name;
