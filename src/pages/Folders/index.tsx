@@ -15,10 +15,11 @@ import {
     Stack,
     Table,
     Text,
-    TextInput,
+    TextInput, Tooltip,
 } from '@mantine/core';
 import {
     IconAlertCircle,
+    IconArchive,
     IconChevronRight,
     IconLayoutList,
     IconSearch,
@@ -67,6 +68,10 @@ function countAdvancedFilters(filters: AdvancedFilters) {
     return filters.cpu.length + filters.ram.length + filters.age.length + filters.owner.length;
 }
 
+function isArchivedProject(folder?: string) {
+    return folder?.includes('ArchivedProjects') ?? false;
+}
+
 // ── SelectionHeader ───────────────────────────────────────────────────────────
 
 interface SelectionHeaderProps {
@@ -107,7 +112,8 @@ function SelectionHeader({sel, guests, isLoading}: SelectionHeaderProps) {
                         <StatCard label="Total" value={guests.length} minWidth={200}/>
                         <StatCard label="Online" value={guests.filter(m => m.power === 'on').length} minWidth={200}
                                   color="var(--mantine-color-teal-5)"/>
-                        <StatCard label="Suspended" value={guests.filter(m => m.power === 'suspended').length} minWidth={200}
+                        <StatCard label="Suspended" value={guests.filter(m => m.power === 'suspended').length}
+                                  minWidth={200}
                                   color="var(--mantine-color-yellow-8)"/>
                         <StatCard label="Offline" value={guests.filter(m => m.power === 'off').length} minWidth={200}
                                   color="var(--mantine-color-red-5)"/>
@@ -262,7 +268,9 @@ interface GuestRowProps {
     onToggle: (id: string) => void;
 }
 
-function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) {
+function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) {
+    const archived = isArchivedProject(m.folder);
+
     return (
         <>
             <Table.Tr onClick={() => onToggle(m.id)} style={{cursor: 'pointer'}}>
@@ -274,9 +282,20 @@ function GuestRow({guest: m, isExpanded, colSpan = 8, onToggle}: GuestRowProps) 
                                       }}/>
                 </Table.Td>
                 <Table.Td fw={300} ff="monospace">{m.name}</Table.Td>
-                <Table.Td ><PowerBadge state={m.power}/></Table.Td>
+                <Table.Td ta="center">
+                    {archived && (
+                        <Tooltip label={"Archived project"} withArrow>
+                            <IconArchive
+                                size={15}
+                                color="var(--mantine-color-orange-5)"
+                                aria-label="Archived project VM"
+                            />
+                        </Tooltip>
+                    )}
+                </Table.Td>
+                <Table.Td><PowerBadge state={m.power}/></Table.Td>
                 <Table.Td ff="monospace" c="dimmed">{m.folder ?? '—'}</Table.Td>
-                <Table.Td ><CPUBadge cores={m.cpu}/></Table.Td>
+                <Table.Td><CPUBadge cores={m.cpu}/></Table.Td>
                 <Table.Td maw={50}><RAMBadge ramGiB={m.ram}/></Table.Td>
                 <Table.Td ff="monospace" c="dimmed">{m.ip ?? '—'}</Table.Td>
                 {/*<Table.Td c="dimmed"
@@ -321,9 +340,9 @@ function TableSkeleton() {
         <Table fz="xs" verticalSpacing="xs">
             <Table.Thead>
                 <Table.Tr>
-                    <Table.Th w={24}/><Table.Th>Guest</Table.Th><Table.Th>IP</Table.Th>
-                    <Table.Th>Power</Table.Th><Table.Th>CPUs</Table.Th><Table.Th>RAM</Table.Th>
-                    <Table.Th>Network</Table.Th><Table.Th>Owner</Table.Th>
+                    <Table.Th w={24}/><Table.Th>Guest</Table.Th><Table.Th>Power</Table.Th>
+                    <Table.Th>Folder</Table.Th><Table.Th>Archived</Table.Th><Table.Th>CPUs</Table.Th>
+                    <Table.Th>RAM</Table.Th><Table.Th>IPs</Table.Th><Table.Th>Owner</Table.Th>
                 </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -331,11 +350,12 @@ function TableSkeleton() {
                     <Table.Tr key={i}>
                         <Table.Td/>
                         <Table.Td><Skeleton height={10} width={`${50 + (i % 5) * 10}%`} radius="sm"/></Table.Td>
+                        <Table.Td><Skeleton height={16} width={52} radius="xl"/></Table.Td>
                         <Table.Td><Skeleton height={10} width={90} radius="sm"/></Table.Td>
+                        <Table.Td><Skeleton height={14} width={14} radius="xl" mx="auto"/></Table.Td>
                         <Table.Td><Skeleton height={16} width={52} radius="xl"/></Table.Td>
                         <Table.Td><Skeleton height={10} width={20} radius="sm"/></Table.Td>
                         <Table.Td><Skeleton height={10} width={28} radius="sm"/></Table.Td>
-                        <Table.Td><Skeleton height={10} width={`${40 + (i % 4) * 12}%`} radius="sm"/></Table.Td>
                         <Table.Td><Skeleton height={10} width={60} radius="sm"/></Table.Td>
                     </Table.Tr>
                 ))}
@@ -352,6 +372,7 @@ function GuestTableHead() {
             <Table.Tr>
                 <Table.Th w={24}/>
                 <Table.Th w={300}>Guest</Table.Th>
+                <Table.Th w={80}></Table.Th>
                 <Table.Th w={70}>Power</Table.Th>
                 <Table.Th w={200}>Folder</Table.Th>
                 <Table.Th w={70}>CPUs</Table.Th>
@@ -503,7 +524,7 @@ function AllGuestsView({guests, expanded, onToggle, mode}: AllGuestsViewProps) {
 
     if (mode === 'table') {
         return (
-            <Table  highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
+            <Table highlightOnHover stickyHeader verticalSpacing="xs" fz="xs">
                 <GuestTableHead/>
                 <Table.Tbody>
                     {guests.map((guest) => (
