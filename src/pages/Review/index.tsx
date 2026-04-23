@@ -46,15 +46,24 @@ import type {Machine} from '@/types';
 import {exportCsv, exportJson} from '@/utils/export';
 import {fmtAge, machineAgeMs} from '@/utils/common';
 
-const PRESETS = [
-    {label: '3 months', value: '3m', days: 90, ms: 1000 * 60 * 60 * 24 * 90},
-    {label: '6 months', value: '6m', days: 180, ms: 1000 * 60 * 60 * 24 * 180},
-    {label: '1 year', value: '1y', days: 365, ms: 1000 * 60 * 60 * 24 * 365},
-    {label: '2 years', value: '2y', days: 730, ms: 1000 * 60 * 60 * 24 * 730},
-    {label: '3 years', value: '3y', days: 1095, ms: 1000 * 60 * 60 * 24 * 1095},
-] as const;
+const DAY_MS = 1000 * 60 * 60 * 24;
+type ThresholdValue = '3m' | '6m' | '1y' | '2y' | '3y' | '4y' | '5y';
 
-type ThresholdValue = (typeof PRESETS)[number]['value'];
+const PRESETS = [
+    {label: '3 months', value: '3m', days: 90},
+    {label: '6 months', value: '6m', days: 180},
+    {label: '1 year',   value: '1y', days: 365},
+    {label: '2 years',  value: '2y', days: 2*365},
+    {label: '3 years',  value: '3y', days: 3*365},
+    {label: '4 years',  value: '4y', days: 4*365},
+    {label: '5 years',  value: '5y', days: 5*365},
+].map((p) => ({...p, ms: p.days * DAY_MS})) as unknown as readonly {
+    label: string;
+    value: ThresholdValue;
+    days: number;
+    ms: number;
+}[];
+
 
 const NOTES_FIELD_ALIASES = ['notes'];
 const VCENTER_FIELD_ALIASES = ['vcenter_url', 'vcenterurl', 'vcenter', 'vcenter_link', 'vcenter link'];
