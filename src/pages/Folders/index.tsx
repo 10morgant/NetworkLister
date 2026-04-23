@@ -20,7 +20,7 @@ import {
 import {
     IconAlertCircle,
     IconArchive,
-    IconChevronRight,
+    IconChevronRight, IconExternalLink,
     IconLayoutList,
     IconSearch,
     IconTable,
@@ -43,6 +43,7 @@ import {
     type FolderSelection,
 } from './FoldersSidebar';
 import {AGE_FILTER_OPTIONS, AgeFilterValue, getGuestAgeBucket} from "@/types/ageBuckets";
+import {Link} from "@tanstack/react-router";
 
 const UNOWNED_OWNER_VALUE = '__unowned__';
 
@@ -274,17 +275,16 @@ function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) 
     return (
         <>
             <Table.Tr onClick={() => onToggle(m.id)} style={{cursor: 'pointer'}}>
-                <Table.Td>
+                <Table.Td w={15} pr={0}>
                     <IconChevronRight size={12} color="var(--mantine-color-dark-3)"
                                       style={{
                                           transform: isExpanded ? 'rotate(90deg)' : 'none',
                                           transition: 'transform 0.2s'
                                       }}/>
                 </Table.Td>
-                <Table.Td fw={300} ff="monospace">{m.name}</Table.Td>
-                <Table.Td ta="center">
+                <Table.Td ta="center" w={25} pl={0} pr={0}>
                     {archived && (
-                        <Tooltip label={"Archived project"} withArrow>
+                        <Tooltip label={"Archived project"}>
                             <IconArchive
                                 size={15}
                                 color="var(--mantine-color-orange-5)"
@@ -293,16 +293,34 @@ function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) 
                         </Tooltip>
                     )}
                 </Table.Td>
-                <Table.Td><PowerBadge state={m.power}/></Table.Td>
+                <Table.Td fw={300} ff="monospace">{m.name}</Table.Td>
                 <Table.Td ff="monospace" c="dimmed">{m.folder ?? '—'}</Table.Td>
+                <Table.Td><PowerBadge state={m.power}/></Table.Td>
                 <Table.Td><CPUBadge cores={m.cpu}/></Table.Td>
                 <Table.Td maw={50}><RAMBadge ramGiB={m.ram}/></Table.Td>
-                <Table.Td ff="monospace" c="dimmed">{m.ip ?? '—'}</Table.Td>
                 {/*<Table.Td c="dimmed"
                           style={{maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                     {networkNames}
                 </Table.Td>*/}
                 <Table.Td ff="monospace" c="dimmed">{m.owner ?? '—'}</Table.Td>
+
+                <Table.Td ta="center" w={25} pl={0}>
+                    <Link
+                        to={`${m.vmurl}`}
+                        target={"_blank"}
+                        onClick={e => e.stopPropagation()}
+                        style={{color: "white"}}
+
+                    >
+                        <Tooltip label={"View in vCenter"}>
+                            <IconExternalLink
+                                size={15}
+                                // color="var(--mantine-color-orange-5)"
+                                aria-label="vCenter link"
+                            />
+                        </Tooltip>
+                    </Link>
+                </Table.Td>
             </Table.Tr>
             <Table.Tr style={{background: 'var(--mantine-color-dark-8)'}}>
                 <Table.Td colSpan={colSpan} p={0}>
@@ -313,7 +331,6 @@ function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) 
                                 ['Group', m.group],
                                 ['Sub-Group', m.sub_group],
                                 ['Owner', m.owner],
-                                ['IPs', m.ip],
                                 ['Created', fmtDate(m.created ?? null)],
                                 ['Uptime', m.power === 'on' ? fmtUptime(m.power_on_time ?? null) + ' ago' : '—'],
                                 ['Power', m.power],
@@ -329,6 +346,7 @@ function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) 
                     </Collapse>
                 </Table.Td>
             </Table.Tr>
+
         </>
     );
 }
@@ -340,9 +358,14 @@ function TableSkeleton() {
         <Table fz="xs" verticalSpacing="xs">
             <Table.Thead>
                 <Table.Tr>
-                    <Table.Th w={24}/><Table.Th>Guest</Table.Th><Table.Th>Power</Table.Th>
-                    <Table.Th>Folder</Table.Th><Table.Th>Archived</Table.Th><Table.Th>CPUs</Table.Th>
-                    <Table.Th>RAM</Table.Th><Table.Th>IPs</Table.Th><Table.Th>Owner</Table.Th>
+                    <Table.Th w={24}/>
+                    <Table.Th></Table.Th>
+                    <Table.Th>Guest</Table.Th>
+                    <Table.Th>Power</Table.Th>
+                    <Table.Th>Folder</Table.Th>
+                    <Table.Th>CPUs</Table.Th>
+                    <Table.Th>RAM</Table.Th>
+                    <Table.Th>Owner</Table.Th>
                 </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -370,15 +393,15 @@ function GuestTableHead() {
     return (
         <Table.Thead>
             <Table.Tr>
-                <Table.Th w={24}/>
-                <Table.Th w={300}>Guest</Table.Th>
-                <Table.Th w={80}></Table.Th>
-                <Table.Th w={70}>Power</Table.Th>
+                <Table.Th w={15}/>
+                <Table.Th w={15}/>
+                <Table.Th w={200}>Guest</Table.Th>
                 <Table.Th w={200}>Folder</Table.Th>
+                <Table.Th w={70}>Power</Table.Th>
                 <Table.Th w={70}>CPUs</Table.Th>
                 <Table.Th w={70}>RAM</Table.Th>
-                <Table.Th w={100}>IPs</Table.Th>
                 <Table.Th w={100}>Owner</Table.Th>
+                <Table.Th w={15}/>
             </Table.Tr>
         </Table.Thead>
     );
@@ -720,7 +743,7 @@ export default function FoldersPage() {
             const q = search.toLowerCase();
             const matchesSearch =
                 m.name.toLowerCase().includes(q) ||
-                (m.ip ?? '').includes(q) ||
+                // (m.ip ?? '').includes(q) ||
                 (m.owner ?? '').toLowerCase().includes(q);
 
             if (!matchesSearch) return false;

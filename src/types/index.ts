@@ -18,18 +18,19 @@ export interface GuestNetworkEntry {
 
 export interface Guest {
     id: string;
+    vmoid: string;
+    vmurl: string;
     name: string;
     description?: string;
     folder?: string;
     group?: string;
     sub_group?: string;
     os?: string;
-    ip?: string;
     power: PowerState;
     power_on_time?: string | null;
     power_off_time?: string | null;
-    created?: string;
-    owner?: string;
+    created?: string | null;
+    owner?: string | null;
     cpu: number;
     ram: number;
     custom_fields?: Record<string, string>;

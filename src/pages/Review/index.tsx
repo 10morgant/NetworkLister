@@ -46,6 +46,8 @@ import type {Machine} from '@/types';
 import {exportCsv, exportJson} from '@/utils/export';
 import {fmtAge, getMachineAge} from '@/utils/common';
 
+const ACTIONS_ENABLED = import.meta.env.VITE_ENABLE_ACTIONS && import.meta.env.VITE_ENABLE_ACTIONS !== 'false';
+console.log(`Actions enabled: ${ACTIONS_ENABLED}`, import.meta.env.VITE_ENABLE_ACTIONS);
 const DAY_MS = 1000 * 60 * 60 * 24;
 type ThresholdValue = '3m' | '6m' | '1y' | '2y' | '3y' | '4y' | '5y';
 
@@ -343,26 +345,28 @@ function MachineRow({
                 <Table.Td ff="monospace" c="dimmed">{fmtDate(machine.created ?? null)}</Table.Td>
                 <Table.Td ff="monospace" c="dimmed">{machine.owner ?? '—'}</Table.Td>
 
-                <Table.Td>
-                    <Group gap={4}>
-                        <Tooltip label="Archive" withArrow>
-                            <ActionIcon size="xs" variant="light" color="yellow"
-                                        onClick={() => onAction('archive')}>
-                                <IconArchive size={12}/>
-                            </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Delete" withArrow>
-                            <ActionIcon size="xs" variant="light" color="red"
-                                        onClick={() => onAction('delete')}>
-                                <IconTrash size={12}/>
-                            </ActionIcon>
-                        </Tooltip>
-                    </Group>
-                </Table.Td>
+                {ACTIONS_ENABLED && (
+                    <Table.Td>
+                        <Group gap={4}>
+                            <Tooltip label="Archive" withArrow>
+                                <ActionIcon size="xs" variant="light" color="yellow"
+                                            onClick={() => onAction('archive')}>
+                                    <IconArchive size={12}/>
+                                </ActionIcon>
+                            </Tooltip>
+                            <Tooltip label="Delete" withArrow>
+                                <ActionIcon size="xs" variant="light" color="red"
+                                            onClick={() => onAction('delete')}>
+                                    <IconTrash size={12}/>
+                                </ActionIcon>
+                            </Tooltip>
+                        </Group>
+                    </Table.Td>
+                )}
             </Table.Tr>
 
             <Table.Tr>
-                <Table.Td colSpan={9} p={0}>
+                <Table.Td colSpan={ACTIONS_ENABLED ? 9 : 8} p={0}>
                     <Collapse expanded={isExpanded}>
                         <ExpandedDetail machine={machine}/>
                     </Collapse>
@@ -499,24 +503,28 @@ export default function ReviewPage() {
                                 label={`Export selected (${selectedMachines.length})`}
                                 filename={`vms-selected-older-than-${threshold}`}
                             />
-                            <Button
-                                size="xs"
-                                variant="light"
-                                color="yellow"
-                                leftSection={<IconArchive size={13}/>}
-                                onClick={() => triggerAction('archive')}
-                            >
-                                Archive
-                            </Button>
-                            <Button
-                                size="xs"
-                                variant="light"
-                                color="red"
-                                leftSection={<IconTrash size={13}/>}
-                                onClick={() => triggerAction('delete')}
-                            >
-                                Delete
-                            </Button>
+                            {ACTIONS_ENABLED && (
+                                <>
+                                    <Button
+                                        size="xs"
+                                        variant="light"
+                                        color="yellow"
+                                        leftSection={<IconArchive size={13}/>}
+                                        onClick={() => triggerAction('archive')}
+                                    >
+                                        Archive
+                                    </Button>
+                                    <Button
+                                        size="xs"
+                                        variant="light"
+                                        color="red"
+                                        leftSection={<IconTrash size={13}/>}
+                                        onClick={() => triggerAction('delete')}
+                                    >
+                                        Delete
+                                    </Button>
+                                </>
+                            )}
                         </>
                     )}
                     <ExportMenu
@@ -566,7 +574,7 @@ export default function ReviewPage() {
                                     <Table.Th>Age</Table.Th>
                                     <Table.Th>Created</Table.Th>
                                     <Table.Th>Owner</Table.Th>
-                                    <Table.Th w={80}>Actions</Table.Th>
+                                    {ACTIONS_ENABLED && <Table.Th w={80}>Actions</Table.Th>}
                                 </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
