@@ -343,6 +343,30 @@ function GuestRow({guest: m, isExpanded, colSpan = 9, onToggle}: GuestRowProps) 
                                 </Stack>
                             ))}
                         </SimpleGrid>
+                        {m.network_objs.length > 0 && (
+                            <Stack px="xl" pb="sm" gap={4}>
+                                <Text size="xs" tt="uppercase" c="dimmed" style={{letterSpacing: '0.08em'}}>
+                                    Networks
+                                </Text>
+                                <SimpleGrid cols={3}>
+                                    {m.network_objs.map((net) => (
+                                        <Group key={net.name} gap="xs" wrap="nowrap" align="flex-start">
+                                            <Text size="xs" ff="monospace" fw={600} style={{flexShrink: 0}}>
+                                                {net.name}
+                                            </Text>
+                                            <Stack gap={1}>
+                                                {net.ips.length > 0
+                                                    ? net.ips.map((ip) => (
+                                                        <Text key={ip} size="xs" ff="monospace" c="dimmed">{ip}</Text>
+                                                    ))
+                                                    : <Text size="xs" c="dimmed">—</Text>
+                                                }
+                                            </Stack>
+                                        </Group>
+                                    ))}
+                                </SimpleGrid>
+                            </Stack>
+                        )}
                     </Collapse>
                 </Table.Td>
             </Table.Tr>
@@ -743,7 +767,7 @@ export default function FoldersPage() {
             const q = search.toLowerCase();
             const matchesSearch =
                 m.name.toLowerCase().includes(q) ||
-                // (m.ip ?? '').includes(q) ||
+                (m.ip ?? '').includes(q) ||
                 (m.owner ?? '').toLowerCase().includes(q);
 
             if (!matchesSearch) return false;
