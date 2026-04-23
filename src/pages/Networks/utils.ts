@@ -4,6 +4,9 @@ import {
     Network
 } from '@/types';
 
+// Re-exported from the central utils so existing imports keep working
+export {fmtDate, fmtUptime} from '@/utils/common';
+
 const ipToInt = (ip: string) => ip.split('.').reduce((a, o) => (a << 8) + parseInt(o, 10), 0) >>> 0;
 const intToIp = (n: number) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
 
@@ -74,16 +77,4 @@ export function networkStats(guests: IPGuest[], clashes: IPGuests[]) {
         on       : all.filter(m => m.power === 'on').length,
         off      : all.filter(m => m.power === 'off').length,
     };
-}
-
-export function fmtDate(d: string | null) {
-    return d ? new Date(d).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) : '—';
-}
-
-export function fmtUptime(d: string | null) {
-    if (!d) return '—';
-    const diff = Date.now() - new Date(d).getTime();
-    const day  = Math.floor(diff / 86400000);
-    const h    = Math.floor((diff % 86400000) / 3600000);
-    return day > 365 ? `${Math.floor(day / 365)}y ${day % 365}d` : day > 0 ? `${day}d ${h}h` : `${h}h`;
 }

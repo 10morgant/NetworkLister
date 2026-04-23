@@ -44,7 +44,7 @@ import {StatCard} from '@/components/shared/StatCard';
 import {fmtDate, fmtUptime} from '@/pages/Networks/utils';
 import type {Machine} from '@/types';
 import {exportCsv, exportJson} from '@/utils/export';
-import {fmtAge, machineAgeMs} from '@/utils/common';
+import {fmtAge, getMachineAge} from '@/utils/common';
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 type ThresholdValue = '3m' | '6m' | '1y' | '2y' | '3y' | '4y' | '5y';
@@ -91,9 +91,6 @@ function getMachineVcenterUrl(machine: Machine) {
     return getCustomField(machine, VCENTER_FIELD_ALIASES);
 }
 
-function getMachineAge(machine: Machine) {
-    return machine.created ? machineAgeMs(machine.created) : 0;
-}
 
 function getAgeColor(ageMs: number) {
     if (ageMs >= PRESETS[3].ms) return 'var(--mantine-color-red-5)';
