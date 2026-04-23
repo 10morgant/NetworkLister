@@ -86,6 +86,12 @@ function getMachineAge(machine: Machine) {
     return machine.created ? machineAgeMs(machine.created) : 0;
 }
 
+function getAgeColor(ageMs: number) {
+    if (ageMs >= PRESETS[3].ms) return 'var(--mantine-color-red-5)';
+    if (ageMs >= PRESETS[2].ms) return 'var(--mantine-color-yellow-5)';
+    return 'var(--mantine-color-dark-2)';
+}
+
 function ConfirmModal({opened, onClose, action, count, onConfirm}: {
     opened: boolean;
     onClose: () => void;
@@ -271,6 +277,96 @@ function ExpandedDetail({machine}: { machine: Machine }) {
     );
 }
 
+function MachineRow({
+    machine,
+    isSelected,
+    isExpanded,
+    onToggleSelect,
+    onToggleExpand,
+    onAction,
+}: {
+    machine: Machine;
+    isSelected: boolean;
+    isExpanded: boolean;
+    onToggleSelect: () => void;
+    onToggleExpand: () => void;
+    onAction: (action: 'archive' | 'delete') => void;
+}) {
+    const ageMs = getMachineAge(machine);
+
+    return (
+        <Fragment key={machine.id}>
+            <Table.Tr
+                style={{
+                    background: isSelected
+                        ? 'var(--surface-3)'
+                        : isExpanded
+                            ? 'var(--surface-2)'
+                            : undefined,
+                }}
+            >
+                <Table.Td>
+                    <Checkbox size="xs" checked={isSelected} onChange={onToggleSelect}/>
+                </Table.Td>
+
+                <Table.Td>
+                    <ActionIcon
+                        size="xs"
+                        variant="subtle"
+                        color="gray"
+                        onClick={onToggleExpand}
+                    >
+                        <IconChevronRight
+                            size={13}
+                            style={{
+                                transform : isExpanded ? 'rotate(90deg)' : 'none',
+                                transition: 'transform 0.2s',
+                            }}
+                        />
+                    </ActionIcon>
+                </Table.Td>
+
+                <Table.Td fw={500} ff="monospace">{machine.name}</Table.Td>
+                <Table.Td ff="monospace" c="dimmed">{machine.folder ?? '—'}</Table.Td>
+                <Table.Td><PowerBadge state={machine.power}/></Table.Td>
+                <Table.Td>
+                    <Text size="xs" ff="monospace" fw={700} style={{color: getAgeColor(ageMs)}}>
+                        {fmtAge(ageMs)}
+                    </Text>
+                </Table.Td>
+                <Table.Td ff="monospace" c="dimmed">{fmtDate(machine.created ?? null)}</Table.Td>
+                <Table.Td ff="monospace" c="dimmed">{machine.owner ?? '—'}</Table.Td>
+
+                <Table.Td>
+                    <Group gap={4}>
+                        <Tooltip label="Archive" withArrow>
+                            <ActionIcon size="xs" variant="light" color="yellow"
+                                        onClick={() => onAction('archive')}>
+                                <IconArchive size={12}/>
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Delete" withArrow>
+                            <ActionIcon size="xs" variant="light" color="red"
+                                        onClick={() => onAction('delete')}>
+                                <IconTrash size={12}/>
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
+                </Table.Td>
+            </Table.Tr>
+
+            <Table.Tr>
+                <Table.Td colSpan={9} p={0}>
+                    <Collapse expanded={isExpanded}>
+                        <ExpandedDetail machine={machine}/>
+                    </Collapse>
+                </Table.Td>
+            </Table.Tr>
+        </Fragment>
+    );
+}
+
+
 export default function ReviewPage() {
     const [threshold, setThreshold] = useState<ThresholdValue>('2y');
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -338,6 +434,11 @@ export default function ReviewPage() {
     const triggerAction = (action: 'archive' | 'delete') => {
         setConfirmAction(action);
         openModal();
+    };
+
+    const triggerSingleAction = (id: string, action: 'archive' | 'delete') => {
+        setSelected(new Set([id]));
+        triggerAction(action);
     };
 
     const stats = useMemo(() => ({
@@ -463,105 +564,17 @@ export default function ReviewPage() {
                                 </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
-                                {oldMachines.map((machine) => {
-                                    const isSelected = selected.has(machine.id);
-                                    const isExpanded = expanded.has(machine.id);
-                                    const ageMs = getMachineAge(machine);
-                                    const ageColor = ageMs >= PRESETS[3].ms
-                                        ? 'var(--mantine-color-red-5)'
-                                        : ageMs >= PRESETS[2].ms
-                                            ? 'var(--mantine-color-yellow-5)'
-                                            : 'var(--mantine-color-dark-2)';
-
-                                    return (
-                                        <Fragment key={machine.id}>
-                                            <Table.Tr
-                                                style={{
-                                                    background: isSelected
-                                                        ? 'var(--surface-3)'
-                                                        : isExpanded
-                                                            ? 'var(--surface-2)'
-                                                            : undefined,
-                                                }}
-                                            >
-                                                <Table.Td>
-                                                    <Checkbox
-                                                        size="xs"
-                                                        checked={isSelected}
-                                                        onChange={() => toggleOne(machine.id)}
-                                                    />
-                                                </Table.Td>
-
-                                                <Table.Td>
-                                                    <ActionIcon
-                                                        size="xs"
-                                                        variant="subtle"
-                                                        color="gray"
-                                                        onClick={() => toggleExpand(machine.id)}
-                                                    >
-                                                        <IconChevronRight
-                                                            size={13}
-                                                            style={{
-                                                                transform : isExpanded ? 'rotate(90deg)' : 'none',
-                                                                transition: 'transform 0.2s',
-                                                            }}
-                                                        />
-                                                    </ActionIcon>
-                                                </Table.Td>
-
-                                                <Table.Td fw={500} ff="monospace">{machine.name}</Table.Td>
-                                                <Table.Td ff="monospace" c="dimmed">{machine.folder ?? '—'}</Table.Td>
-                                                <Table.Td><PowerBadge state={machine.power}/></Table.Td>
-                                                <Table.Td>
-                                                    <Text size="xs" ff="monospace" fw={700} style={{color: ageColor}}>
-                                                        {fmtAge(ageMs)}
-                                                    </Text>
-                                                </Table.Td>
-                                                <Table.Td ff="monospace" c="dimmed">{fmtDate(machine.created ?? null)}</Table.Td>
-                                                <Table.Td ff="monospace" c="dimmed">{machine.owner ?? '—'}</Table.Td>
-
-                                                <Table.Td>
-                                                    <Group gap={4}>
-                                                        <Tooltip label="Archive" withArrow>
-                                                            <ActionIcon
-                                                                size="xs"
-                                                                variant="light"
-                                                                color="yellow"
-                                                                onClick={() => {
-                                                                    setSelected(new Set([machine.id]));
-                                                                    triggerAction('archive');
-                                                                }}
-                                                            >
-                                                                <IconArchive size={12}/>
-                                                            </ActionIcon>
-                                                        </Tooltip>
-                                                        <Tooltip label="Delete" withArrow>
-                                                            <ActionIcon
-                                                                size="xs"
-                                                                variant="light"
-                                                                color="red"
-                                                                onClick={() => {
-                                                                    setSelected(new Set([machine.id]));
-                                                                    triggerAction('delete');
-                                                                }}
-                                                            >
-                                                                <IconTrash size={12}/>
-                                                            </ActionIcon>
-                                                        </Tooltip>
-                                                    </Group>
-                                                </Table.Td>
-                                            </Table.Tr>
-
-                                            <Table.Tr>
-                                                <Table.Td colSpan={11} p={0}>
-                                                    <Collapse expanded={isExpanded}>
-                                                        <ExpandedDetail machine={machine}/>
-                                                    </Collapse>
-                                                </Table.Td>
-                                            </Table.Tr>
-                                        </Fragment>
-                                    );
-                                })}
+                                {oldMachines.map((machine) => (
+                                    <MachineRow
+                                        key={machine.id}
+                                        machine={machine}
+                                        isSelected={selected.has(machine.id)}
+                                        isExpanded={expanded.has(machine.id)}
+                                        onToggleSelect={() => toggleOne(machine.id)}
+                                        onToggleExpand={() => toggleExpand(machine.id)}
+                                        onAction={(action) => triggerSingleAction(machine.id, action)}
+                                    />
+                                ))}
                             </Table.Tbody>
                         </Table>
 
