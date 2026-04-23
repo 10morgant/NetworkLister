@@ -40,6 +40,19 @@ export interface Guest {
 /** Backwards-compat alias */
 export type Machine = Guest;
 
+export interface ReviewSummary {
+    total: number;
+    on: number;
+    off: number;
+    suspended: number;
+    archived: number;
+}
+
+export interface ReviewGuestsResponse {
+    items: Guest[];
+    summary: ReviewSummary;
+}
+
 /** One IP → one guest (normal, non-clashing row from the API) */
 export interface IPGuest {
     ip: string;
